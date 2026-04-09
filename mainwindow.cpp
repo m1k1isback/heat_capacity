@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "methodologydialog.h"
+#include "experimentwindow.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <QScreen>
@@ -81,9 +82,17 @@ void MainWindow::setupUI()
 
 void MainWindow::startExperiment()
 {
-    QMessageBox::information(this, "Информация",
-                             "Здесь будет запуск эксперимента.\n"
-                             "Этот функционал будет добавлен позже.");
+    // Создаем окно эксперимента, передавая указатель на себя (this)
+    ExperimentWindow *expWindow = new ExperimentWindow(this);
+
+    // Позволяем удалить это окно из памяти при закрытии
+    expWindow->setAttribute(Qt::WA_DeleteOnClose);
+
+    // Скрываем главное окно (не закрываем, чтобы можно было вернуться)
+    this->hide();
+
+    // Показываем окно эксперимента
+    expWindow->show();
 }
 
 void MainWindow::showMethodology()

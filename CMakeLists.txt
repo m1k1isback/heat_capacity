@@ -24,6 +24,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Lab_work
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        experimentwindow.h experimentwindow.cpp
     )
 else()
     if(ANDROID)

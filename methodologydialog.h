@@ -4,8 +4,8 @@
 #include <QDialog>
 #include <QTextEdit>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QPushButton>
-#include <QScrollArea>
 #include <QLabel>
 
 class MethodologyDialog : public QDialog
@@ -13,7 +13,7 @@ class MethodologyDialog : public QDialog
     Q_OBJECT
 
 public:
-    MethodologyDialog(QWidget *parent = nullptr);
+    explicit MethodologyDialog(QWidget *parent = nullptr);
     ~MethodologyDialog();
 
 private:
@@ -21,6 +21,7 @@ private:
     QString getMethodologyText();
 
     QVBoxLayout *mainLayout;
+    QHBoxLayout *buttonLayout;
     QLabel *titleLabel;
     QTextEdit *textEdit;
     QPushButton *closeButton;
