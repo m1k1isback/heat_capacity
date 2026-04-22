@@ -2,25 +2,33 @@
 #define EXPERIMENTWINDOW_H
 
 #include <QMainWindow>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QPushButton>
+#include <QTableWidget>
+#include <QLabel>
+#include <QTimer>
+#include "CalorimeterScene.h" // Наша сцена
 
-// Объявляем класс заранее, чтобы не было циклических зависимостей
-class MainWindow;
+class MainWindow; // Объявление главного окна для возврата
 
 class ExperimentWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    // Принимаем указатель на главное окно
     explicit ExperimentWindow(MainWindow *parentWindow, QWidget *parent = nullptr);
     ~ExperimentWindow();
 
-private slots:
-    void goBack();
-
 private:
-    MainWindow *mainWindowPtr; // Указатель на главное окно для возврата
-    QPushButton *backButton;
+    void setupUI(); // Настройка интерфейса
+
+    MainWindow *mainWindowPtr;
+    CalorimeterScene *scene;
+    QTableWidget *tableWidget;
+    QPushButton *btnStart, *btnStop, *btnRecord, *btnBack;
+    QTimer *timer;
+    int rowCount;
+    double currentTime;
 };
 
 #endif // EXPERIMENTWINDOW_H

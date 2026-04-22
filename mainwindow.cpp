@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
 }
 
-MainWindow::~MainWindow()  // <-- ОБЯЗАТЕЛЬНО: деструктор
+MainWindow::~MainWindow()
 {
     if (methodologyDialog) {
         delete methodologyDialog;
@@ -25,8 +25,8 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
 
     mainLayout = new QVBoxLayout(centralWidget);
-    mainLayout->setSpacing(20);
-    mainLayout->addStretch(2);
+    mainLayout->setSpacing(20); //?
+    mainLayout->addStretch(2); //?
 
     numberLabel = new QLabel("Лабораторная работа №3", this);
     numberLabel->setAlignment(Qt::AlignCenter);
