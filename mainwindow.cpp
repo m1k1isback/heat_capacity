@@ -25,8 +25,8 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
 
     mainLayout = new QVBoxLayout(centralWidget);
-    mainLayout->setSpacing(20); //?
-    mainLayout->addStretch(2); //?
+    mainLayout->setSpacing(20);
+    mainLayout->addStretch(2);
 
     numberLabel = new QLabel("Лабораторная работа №3", this);
     numberLabel->setAlignment(Qt::AlignCenter);
@@ -82,16 +82,9 @@ void MainWindow::setupUI()
 
 void MainWindow::startExperiment()
 {
-    // Создаем окно эксперимента, передавая указатель на себя (this)
     ExperimentWindow *expWindow = new ExperimentWindow(this);
-
-    // Позволяем удалить это окно из памяти при закрытии
     expWindow->setAttribute(Qt::WA_DeleteOnClose);
-
-    // Скрываем главное окно (не закрываем, чтобы можно было вернуться)
     this->hide();
-
-    // Показываем окно эксперимента
     expWindow->show();
 }
 

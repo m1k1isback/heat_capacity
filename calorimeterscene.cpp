@@ -3,6 +3,9 @@
 #include <QBrush>
 #include <QGraphicsTextItem>
 #include <QFont>
+#include <QCheckBox>
+#include <QGraphicsProxyWidget>
+#include <QTimer>
 
 CalorimeterScene::CalorimeterScene(QObject *parent)
     : QGraphicsScene(parent)
@@ -12,20 +15,19 @@ CalorimeterScene::CalorimeterScene(QObject *parent)
 
 void CalorimeterScene::buildLayout()
 {
-    // 1. Увеличиваем сцену, чтобы элементы не прилипали к краям
     setSceneRect(0, 0, 600, 600);
 
-    // Делаем фон прозрачным, чтобы он сливался с окном программы
+    // Прозрачный фон
     setBackgroundBrush(Qt::transparent);
 
-    // --- 1. Рисуем корпус калориметра (Термос) ---
+    // Корпус калориметра
     QGraphicsRectItem *body = new QGraphicsRectItem(100, 100, 400, 400);
-    body->setBrush(QBrush(QColor("#f5f5f5"))); // Очень светлый серый
-    body->setPen(QPen(QColor("#a0a0a0"), 2));  // Тонкая серая рамка
+    body->setBrush(QBrush(QColor("#f5f5f5")));
+    body->setPen(QPen(QColor("#a0a0a0"), 2));
     body->setZValue(0);
     addItem(body);
 
-    // Текст "ВАКУУМНЫЙ КАЛОРИМЕТР" (сверху)
+    // Текст "ВАКУУМНЫЙ КАЛОРИМЕТР"
     QGraphicsTextItem *title = new QGraphicsTextItem("ВАКУУМНЫЙ КАЛОРИМЕТР");
     title->setFont(QFont("Arial", 14, QFont::Bold));
     title->setDefaultTextColor(QColor("#333"));
@@ -33,7 +35,7 @@ void CalorimeterScene::buildLayout()
     title->setPos(300 - title->boundingRect().width() / 2, 40);
     addItem(title);
 
-    // --- 2. Рисуем теплоизоляцию (Внутренний пунктир) ---
+    // Пунктир теплоизоляции
     QGraphicsRectItem *insulation = new QGraphicsRectItem(130, 130, 340, 340);
     insulation->setBrush(Qt::NoBrush);
     QPen dashPen(QColor("#bdc3c7"), 1, Qt::DashLine);
@@ -41,7 +43,7 @@ void CalorimeterScene::buildLayout()
     insulation->setZValue(0);
     addItem(insulation);
 
-    // --- 3. Рисуем 4 образца (центруем их внутри изоляции) ---
+    // 4 образца
     // Центры образцов относительно всей сцены
     QPointF positions[] = {
         {230, 230}, {370, 230}, // Верхний ряд
@@ -52,7 +54,7 @@ void CalorimeterScene::buildLayout()
         int row = i / 2;
         int col = i % 2;
 
-        // Тело образца (Круг)
+        // Тело образца
         QGraphicsEllipseItem *sample = new QGraphicsEllipseItem(
             positions[i].x() - 40, positions[i].y() - 40, 80, 80
             );
@@ -61,18 +63,48 @@ void CalorimeterScene::buildLayout()
         sample->setZValue(1);
         addItem(sample);
 
-       /* // Текст "Обр. N"
-        QGraphicsTextItem *lbl = new QGraphicsTextItem(QString::number(i + 1), sample);
-        lbl->setFont(QFont("Arial", 14, QFont::Bold));
-        lbl->setDefaultTextColor(QColor("#2c3e50"));
+        m_sampleCircles[i] = sample;
 
-        qreal centerX = positions[i].x();
-        qreal textWidth = lbl->boundingRect().width();
-        qreal textHeight = lbl->boundingRect().height();
-        lbl->setPos(-textWidth / 2, -textHeight / 2); */
+        QGraphicsTextItem* cross = new QGraphicsTextItem("✕");
+
+        cross->setDefaultTextColor(QColor("#4B0082"));
+
+        cross->setFont(QFont("Arial", 30, QFont::Bold));
+
+        qreal textWidth = cross->boundingRect().width();
+        qreal textHeight = cross->boundingRect().height();
+        qreal centerX = positions[i].x() - textWidth / 2;
+        qreal centerY = positions[i].y() - textHeight / 2;
+        cross->setPos(centerX, centerY);
+
+        cross->setVisible(false);
+
+        addItem(cross);
+
+        m_sampleCrosses[i] = cross;
+
+        cross->setZValue(2);
     }
 
-    // --- 4. Размещаем цифровые табло (DigitalDisplay) ---
+    for(int i = 0; i < 4; i++){
+        QCheckBox *cb = new QCheckBox();
+        cb->setText("Обр. " + QString::number(i + 1));
+        checkBoxes[i] = cb;
+        cb->setChecked(true);
+        QGraphicsProxyWidget* proxy = new QGraphicsProxyWidget();
+        proxy->setWidget(cb);
+        addItem(proxy);
+        if(i % 2 == 0){
+            proxy->setPos(positions[i].x() - 90, positions[i].y() - 50);
+        } else {
+            proxy->setPos(positions[i].x() + 40, positions[i].y() - 50);
+        }
+        connect(checkBoxes[i], &QCheckBox::toggled, this, [this, i]() {
+            this->checkSample(i, checkBoxes[i]->isChecked());
+        });
+    }
+
+    // 4 дисплея
     // T1 (Левый Верхний) - Чуть левее образца
     displays[0] = new DigitalDisplay("T1");
     displays[0]->setPos(110, 210);
@@ -93,17 +125,39 @@ void CalorimeterScene::buildLayout()
     displays[3]->setPos(410, 350);
     addItem(displays[3]);
 
+    //---------------------------------------------
     // T0 (Среда) - Снизу по центру
     displays[4] = new DigitalDisplay("T0 (Среда)");
     displays[4]->setPos(250, 520);
     addItem(displays[4]);
+    //------------------------------------------
+
+    for(int i = 0; i < 4; i++){
+        isActive[i] = true;
+    }
 }
 
 void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, double t4, double t0)
 {
-    displays[0]->setValue(t1);
-    displays[1]->setValue(t2);
-    displays[2]->setValue(t3);
-    displays[3]->setValue(t4);
+    double  temps[] = {t1, t2, t3, t4, t0};
+
+    for(int i = 0; i < 4; i++){
+        if(isActive[i]){
+            displays[i]->setValue(temps[i]);
+        } else {
+            displays[i]->setValue(0.0);
+        }
+    }
+
     displays[4]->setValue(t0);
+}
+
+void CalorimeterScene::checkSample(int index, bool  checked){
+    if(index < 0 || index >= 4) return;
+    isActive[index] = checked;
+
+    //QColor color = checked ? QColor("#bdc3c7") : QColor("#FF0000");
+    //m_sampleCircles[index]->setBrush(color);
+
+    m_sampleCrosses[index]->setVisible(!checked);
 }
