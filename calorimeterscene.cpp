@@ -28,12 +28,12 @@ void CalorimeterScene::buildLayout()
     addItem(body);
 
     // Текст "ВАКУУМНЫЙ КАЛОРИМЕТР"
-    QGraphicsTextItem *title = new QGraphicsTextItem("ВАКУУМНЫЙ КАЛОРИМЕТР");
+   /* QGraphicsTextItem *title = new QGraphicsTextItem("ВАКУУМНЫЙ КАЛОРИМЕТР");
     title->setFont(QFont("Arial", 14, QFont::Bold));
     title->setDefaultTextColor(QColor("#333"));
     // Центрируем текст по ширине сцены
     title->setPos(300 - title->boundingRect().width() / 2, 40);
-    addItem(title);
+    addItem(title); */
 
     // Пунктир теплоизоляции
     QGraphicsRectItem *insulation = new QGraphicsRectItem(130, 130, 340, 340);
@@ -65,6 +65,7 @@ void CalorimeterScene::buildLayout()
 
         m_sampleCircles[i] = sample;
 
+        // Крест если образец выключен
         QGraphicsTextItem* cross = new QGraphicsTextItem("✕");
 
         cross->setDefaultTextColor(QColor("#4B0082"));
@@ -84,6 +85,7 @@ void CalorimeterScene::buildLayout()
         m_sampleCrosses[i] = cross;
 
         cross->setZValue(2);
+
     }
 
     for(int i = 0; i < 4; i++){
@@ -132,6 +134,43 @@ void CalorimeterScene::buildLayout()
     addItem(displays[4]);
     //------------------------------------------
 
+    QPointF displayCenters[] = {
+        QPointF(150, 250),  // T1: pos(110,210) + половина размера
+        QPointF(450, 250),  // T2: pos(410,210) + половина размера
+        QPointF(150, 390),  // T3: pos(110,350) + половина размера
+        QPointF(450, 390)   // T4: pos(410,350) + половина размера
+    };
+
+    for(int i = 0; i < 4; i++) {
+        //Провода к дисплею
+        QPointF start = positions[i];
+        QPointF end = displayCenters[i];
+
+        QPainterPath path;
+        path.moveTo(start.x(), start.y());
+
+        //контрольная точка
+        qreal midX = ((start.x() + end.x()) / 2);
+        qreal midY = ((start.y() + end.y()) / 2);
+
+        path.quadTo(midX + 15, midY + 40, end.x(), end.y());
+
+        QGraphicsPathItem* wire = new QGraphicsPathItem(path);
+
+        // Настройка пера
+        QPen wirePen;
+        wirePen.setColor(Qt::black);
+        wirePen.setWidth(2);
+        wirePen.setStyle(Qt::SolidLine);
+        wire->setPen(wirePen);
+        wire->setBrush(Qt::NoBrush);
+        wire->setZValue(10);
+        addItem(wire);
+
+        m_sampleWires[i] = wire;
+
+    }
+
     for(int i = 0; i < 4; i++){
         isActive[i] = true;
     }
@@ -155,9 +194,5 @@ void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, doubl
 void CalorimeterScene::checkSample(int index, bool  checked){
     if(index < 0 || index >= 4) return;
     isActive[index] = checked;
-
-    //QColor color = checked ? QColor("#bdc3c7") : QColor("#FF0000");
-    //m_sampleCircles[index]->setBrush(color);
-
     m_sampleCrosses[index]->setVisible(!checked);
 }

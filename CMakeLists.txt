@@ -27,6 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         experimentwindow.h experimentwindow.cpp
         digitaldisplay.h digitaldisplay.cpp
         calorimeterscene.h calorimeterscene.cpp
+        material.h material.cpp
     )
 else()
     if(ANDROID)

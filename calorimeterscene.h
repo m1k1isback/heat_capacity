@@ -27,6 +27,7 @@ private:
     QCheckBox* checkBoxes[4];
     QGraphicsEllipseItem* m_sampleCircles[4];
     QGraphicsTextItem* m_sampleCrosses[4];
+    QGraphicsPathItem* m_sampleWires[4];
 };
 
 #endif // CALORIMETERSCENE_H
