@@ -15,13 +15,13 @@ CalorimeterScene::CalorimeterScene(QObject *parent)
 
 void CalorimeterScene::buildLayout()
 {
-    setSceneRect(0, 0, 600, 600);
+    setSceneRect(0, 0, 1000, 800);
 
     // Прозрачный фон
     setBackgroundBrush(Qt::transparent);
 
     // Корпус калориметра
-    QGraphicsRectItem *body = new QGraphicsRectItem(100, 100, 400, 400);
+    QGraphicsRectItem *body = new QGraphicsRectItem(150, 125, 550, 550);
     body->setBrush(QBrush(QColor("#f5f5f5")));
     body->setPen(QPen(QColor("#a0a0a0"), 2));
     body->setZValue(0);
@@ -36,7 +36,7 @@ void CalorimeterScene::buildLayout()
     addItem(title); */
 
     // Пунктир теплоизоляции
-    QGraphicsRectItem *insulation = new QGraphicsRectItem(130, 130, 340, 340);
+    QGraphicsRectItem *insulation = new QGraphicsRectItem(170, 145, 510, 510);
     insulation->setBrush(Qt::NoBrush);
     QPen dashPen(QColor("#bdc3c7"), 1, Qt::DashLine);
     insulation->setPen(dashPen);
@@ -46,8 +46,8 @@ void CalorimeterScene::buildLayout()
     // 4 образца
     // Центры образцов относительно всей сцены
     QPointF positions[] = {
-        {230, 230}, {370, 230}, // Верхний ряд
-        {230, 370}, {370, 370}  // Нижний ряд
+        {320, 250}, {530, 250},  // Верхний ряд
+        {320, 500}, {530, 500}   // Нижний ряд
     };
 
     for (int i = 0; i < 4; ++i) {
@@ -56,7 +56,7 @@ void CalorimeterScene::buildLayout()
 
         // Тело образца
         QGraphicsEllipseItem *sample = new QGraphicsEllipseItem(
-            positions[i].x() - 40, positions[i].y() - 40, 80, 80
+            positions[i].x() - 50, positions[i].y() - 50, 100, 100
             );
         sample->setBrush(QBrush(QColor("#bdc3c7"))); // Серебристый
         sample->setPen(QPen(QColor("#7f8c8d"), 2));
@@ -70,7 +70,7 @@ void CalorimeterScene::buildLayout()
 
         cross->setDefaultTextColor(QColor("#4B0082"));
 
-        cross->setFont(QFont("Arial", 30, QFont::Bold));
+        cross->setFont(QFont("Arial", 40, QFont::Bold));
 
         qreal textWidth = cross->boundingRect().width();
         qreal textHeight = cross->boundingRect().height();
@@ -88,6 +88,7 @@ void CalorimeterScene::buildLayout()
 
     }
 
+    // Чекбоксы
     for(int i = 0; i < 4; i++){
         QCheckBox *cb = new QCheckBox();
         cb->setText("Обр. " + QString::number(i + 1));
@@ -97,7 +98,7 @@ void CalorimeterScene::buildLayout()
         proxy->setWidget(cb);
         addItem(proxy);
         if(i % 2 == 0){
-            proxy->setPos(positions[i].x() - 90, positions[i].y() - 50);
+            proxy->setPos(positions[i].x() - 110, positions[i].y() - 50);
         } else {
             proxy->setPos(positions[i].x() + 40, positions[i].y() - 50);
         }
@@ -109,36 +110,36 @@ void CalorimeterScene::buildLayout()
     // 4 дисплея
     // T1 (Левый Верхний) - Чуть левее образца
     displays[0] = new DigitalDisplay("T1");
-    displays[0]->setPos(110, 210);
+    displays[0]->setPos(180, 230);
     addItem(displays[0]);
 
     // T2 (Правый Верхний) - Чуть правее образца
     displays[1] = new DigitalDisplay("T2");
-    displays[1]->setPos(410, 210);
+    displays[1]->setPos(590, 230);
     addItem(displays[1]);
 
     // T3 (Левый Нижний)
     displays[2] = new DigitalDisplay("T3");
-    displays[2]->setPos(110, 350);
+    displays[2]->setPos(180, 480);
     addItem(displays[2]);
 
     // T4 (Правый Нижний)
     displays[3] = new DigitalDisplay("T4");
-    displays[3]->setPos(410, 350);
+    displays[3]->setPos(590, 480);
     addItem(displays[3]);
 
     //---------------------------------------------
-    // T0 (Среда) - Снизу по центру
+    /*// T0 (Среда) - Снизу по центру
     displays[4] = new DigitalDisplay("T0 (Среда)");
     displays[4]->setPos(250, 520);
     addItem(displays[4]);
-    //------------------------------------------
+    //------------------------------------------*/
 
     QPointF displayCenters[] = {
-        QPointF(150, 250),  // T1: pos(110,210) + половина размера
-        QPointF(450, 250),  // T2: pos(410,210) + половина размера
-        QPointF(150, 390),  // T3: pos(110,350) + половина размера
-        QPointF(450, 390)   // T4: pos(410,350) + половина размера
+        QPointF(220, 270),  // T1: pos(110,210) + половина размера
+        QPointF(630, 270),  // T2: pos(410,210) + половина размера
+        QPointF(220, 520),  // T3: pos(110,350) + половина размера
+        QPointF(630, 520)   // T4: pos(410,350) + половина размера
     };
 
     for(int i = 0; i < 4; i++) {
