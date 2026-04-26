@@ -4,31 +4,41 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QPushButton>
 #include <QTableWidget>
-#include <QLabel>
-#include <QTimer>
-#include "CalorimeterScene.h" // Наша сцена
+#include <QPushButton>
+#include <QGraphicsView>
+#include <QResizeEvent> // Добавлено для resizeEvent
+#include "CalorimeterScene.h"
 
-class MainWindow; // Объявление главного окна для возврата
+class MainWindow;
 
 class ExperimentWindow : public QMainWindow
 {
     Q_OBJECT
+
 public:
-    explicit ExperimentWindow(MainWindow *parentWindow, QWidget *parent = nullptr);
+    explicit ExperimentWindow(MainWindow *parentWindow = nullptr, QWidget *parent = nullptr);
     ~ExperimentWindow();
 
+protected:
+    // Переопределяем событие изменения размера для динамического масштабирования
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
-    void setupUI(); // Настройка интерфейса
+    void setupUI();
 
     MainWindow *mainWindowPtr;
     CalorimeterScene *scene;
+    QGraphicsView *graphicsView; // Теперь это член класса
     QTableWidget *tableWidget;
-    QPushButton *btnStart, *btnStop, *btnRecord, *btnBack;
-    QTimer *timer;
+    QPushButton *btnStart;
+    QPushButton *btnRecord;
+    QPushButton *btnStop;
+    QPushButton *btnBack;
+    void fitSceneToView();
+
     int rowCount;
-    double currentTime;
+    int currentTime;
 };
 
 #endif // EXPERIMENTWINDOW_H

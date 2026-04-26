@@ -10,6 +10,11 @@
 CalorimeterScene::CalorimeterScene(QObject *parent)
     : QGraphicsScene(parent)
 {
+    m_lastT0 = 0.0;
+    for(int i = 0; i < 4; ++i) {
+        m_lastSampleTemps[i] = 0.0;
+    }
+
     buildLayout();
 }
 
@@ -107,24 +112,48 @@ void CalorimeterScene::buildLayout()
         });
     }
 
+    for(int i = 0; i < 4; i++) {
+        m_isDifferentialMode[i] = false;
+
+        QCheckBox* diffCheckBox = new QCheckBox("ΔT");
+        diffCheckBox->setToolTip("Дифференциальный тип (показывать ΔT = T - T0)");
+
+        QGraphicsProxyWidget* diffProxy = new QGraphicsProxyWidget();
+        diffProxy->setWidget(diffCheckBox);
+
+        if(i % 2 == 0){
+            diffProxy->setPos(positions[i].x() - 155, positions[i].y() - 50);
+        } else {
+            diffProxy->setPos(positions[i].x() + 110, positions[i].y() - 50);
+        }
+
+        addItem(diffProxy);
+        m_differentialModeCheckBox[i] = diffCheckBox;
+
+        connect(diffCheckBox, &QCheckBox::toggled,
+                this, [this, i](bool checked) {
+                    this->onDifferentialModeToggled(i, checked);
+                });
+    }
+
     // 4 дисплея
     // T1 (Левый Верхний) - Чуть левее образца
-    displays[0] = new DigitalDisplay("T1");
+    displays[0] = new DigitalDisplay("1");
     displays[0]->setPos(180, 230);
     addItem(displays[0]);
 
     // T2 (Правый Верхний) - Чуть правее образца
-    displays[1] = new DigitalDisplay("T2");
+    displays[1] = new DigitalDisplay("2");
     displays[1]->setPos(590, 230);
     addItem(displays[1]);
 
     // T3 (Левый Нижний)
-    displays[2] = new DigitalDisplay("T3");
+    displays[2] = new DigitalDisplay("3");
     displays[2]->setPos(180, 480);
     addItem(displays[2]);
 
     // T4 (Правый Нижний)
-    displays[3] = new DigitalDisplay("T4");
+    displays[3] = new DigitalDisplay("4");
     displays[3]->setPos(590, 480);
     addItem(displays[3]);
 
@@ -179,13 +208,31 @@ void CalorimeterScene::buildLayout()
 
 void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, double t4, double t0)
 {
+    m_lastSampleTemps[0] = t1;
+    m_lastSampleTemps[1] = t2;
+    m_lastSampleTemps[2] = t3;
+    m_lastSampleTemps[3] = t4;
+    m_lastT0 = t0;
+
     double  temps[] = {t1, t2, t3, t4, t0};
 
-    for(int i = 0; i < 4; i++){
-        if(isActive[i]){
-            displays[i]->setValue(temps[i]);
-        } else {
+    for(int i = 0; i < 4; i++) {
+        if(!isActive[i]) {
             displays[i]->setValue(0.0);
+            continue;
+        }
+
+        if(m_isDifferentialMode[i]) {
+            // Дифференциальный режим
+            double deltaT = temps[i] - t0;
+            displays[i]->setValue(deltaT);
+            displays[i]->setPrefix("ΔT");
+            displays[i]->setTextColor(Qt::red);  // или другой цвет
+        } else {
+            // Обычный режим
+            displays[i]->setValue(temps[i]);
+            displays[i]->setPrefix("T");
+            displays[i]->setTextColor(Qt::green);  // или стандартный
         }
     }
 
@@ -196,4 +243,29 @@ void CalorimeterScene::checkSample(int index, bool  checked){
     if(index < 0 || index >= 4) return;
     isActive[index] = checked;
     m_sampleCrosses[index]->setVisible(!checked);
+}
+
+void CalorimeterScene::onDifferentialModeToggled(int sampleIndex, bool enabled){
+    m_isDifferentialMode[sampleIndex] = enabled;
+    if (sampleIndex >= 0 && sampleIndex < 4) {
+        updateDisplayForSample(sampleIndex, m_lastSampleTemps[sampleIndex], m_lastT0);
+    }
+}
+void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, double T0){
+    if (sampleIndex < 0 || sampleIndex >= 4) return;
+    if (!isActive[sampleIndex]) {
+        displays[sampleIndex]->setValue(0.0);
+        return;
+    }
+
+    if (m_isDifferentialMode[sampleIndex]) {
+        double deltaT = T_sample - T0;
+        displays[sampleIndex]->setValue(deltaT);
+        displays[sampleIndex]->setPrefix("ΔT");
+        displays[sampleIndex]->setTextColor(Qt::red);
+    } else {
+        displays[sampleIndex]->setValue(T_sample);
+        displays[sampleIndex]->setPrefix("T");
+        displays[sampleIndex]->setTextColor(Qt::green);
+}
 }

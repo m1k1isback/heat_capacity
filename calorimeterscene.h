@@ -28,6 +28,15 @@ private:
     QGraphicsEllipseItem* m_sampleCircles[4];
     QGraphicsTextItem* m_sampleCrosses[4];
     QGraphicsPathItem* m_sampleWires[4];
+
+    QCheckBox* m_differentialModeCheckBox[4];
+    bool m_isDifferentialMode[4];
+    double m_T0;
+    double m_lastSampleTemps[4];  // T1, T2, T3, T4
+    double m_lastT0;
+private slots:
+    void onDifferentialModeToggled(int sampleIndex, bool enabled);
+    void updateDisplayForSample(int sampleIndex, double T_sample, double T0);
 };
 
 #endif // CALORIMETERSCENE_H
