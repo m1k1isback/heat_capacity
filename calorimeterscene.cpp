@@ -26,7 +26,7 @@ void CalorimeterScene::buildLayout()
     setBackgroundBrush(Qt::transparent);
 
     // Корпус калориметра
-    QGraphicsRectItem *body = new QGraphicsRectItem(150, 125, 550, 550);
+    QGraphicsRectItem *body = new QGraphicsRectItem(150+250, 125, 550, 550); //+400
     body->setBrush(QBrush(QColor("#f5f5f5")));
     body->setPen(QPen(QColor("#a0a0a0"), 2));
     body->setZValue(0);
@@ -41,7 +41,7 @@ void CalorimeterScene::buildLayout()
     addItem(title); */
 
     // Пунктир теплоизоляции
-    QGraphicsRectItem *insulation = new QGraphicsRectItem(170, 145, 510, 510);
+    QGraphicsRectItem *insulation = new QGraphicsRectItem(170+250, 145, 510, 510);
     insulation->setBrush(Qt::NoBrush);
     QPen dashPen(QColor("#bdc3c7"), 1, Qt::DashLine);
     insulation->setPen(dashPen);
@@ -51,8 +51,8 @@ void CalorimeterScene::buildLayout()
     // 4 образца
     // Центры образцов относительно всей сцены
     QPointF positions[] = {
-        {320, 250}, {530, 250},  // Верхний ряд
-        {320, 500}, {530, 500}   // Нижний ряд
+        {320+250, 250}, {520+250, 250},  // Верхний ряд
+        {320+250, 500}, {520+250, 500}   // Нижний ряд
     };
 
     for (int i = 0; i < 4; ++i) {
@@ -73,9 +73,8 @@ void CalorimeterScene::buildLayout()
         // Крест если образец выключен
         QGraphicsTextItem* cross = new QGraphicsTextItem("✕");
 
-        cross->setDefaultTextColor(QColor("#4B0082"));
-
-        cross->setFont(QFont("Arial", 40, QFont::Bold));
+        cross->setDefaultTextColor(QColor("#FF0000"));
+        cross->setFont(QFont("Arial", 50, QFont::Bold));
 
         qreal textWidth = cross->boundingRect().width();
         qreal textHeight = cross->boundingRect().height();
@@ -139,22 +138,22 @@ void CalorimeterScene::buildLayout()
     // 4 дисплея
     // T1 (Левый Верхний) - Чуть левее образца
     displays[0] = new DigitalDisplay("1");
-    displays[0]->setPos(180, 230);
+    displays[0]->setPos(180+250, 230);
     addItem(displays[0]);
 
     // T2 (Правый Верхний) - Чуть правее образца
     displays[1] = new DigitalDisplay("2");
-    displays[1]->setPos(590, 230);
+    displays[1]->setPos(580+250, 230);
     addItem(displays[1]);
 
     // T3 (Левый Нижний)
     displays[2] = new DigitalDisplay("3");
-    displays[2]->setPos(180, 480);
+    displays[2]->setPos(180+250, 480);
     addItem(displays[2]);
 
     // T4 (Правый Нижний)
     displays[3] = new DigitalDisplay("4");
-    displays[3]->setPos(590, 480);
+    displays[3]->setPos(580+250, 480);
     addItem(displays[3]);
 
     //---------------------------------------------
@@ -165,10 +164,10 @@ void CalorimeterScene::buildLayout()
     //------------------------------------------*/
 
     QPointF displayCenters[] = {
-        QPointF(220, 270),  // T1: pos(110,210) + половина размера
-        QPointF(630, 270),  // T2: pos(410,210) + половина размера
-        QPointF(220, 520),  // T3: pos(110,350) + половина размера
-        QPointF(630, 520)   // T4: pos(410,350) + половина размера
+        QPointF(220+250, 270),
+        QPointF(630+250, 270),
+        QPointF(220+250, 520),
+        QPointF(630+250, 520)
     };
 
     for(int i = 0; i < 4; i++) {
@@ -179,7 +178,7 @@ void CalorimeterScene::buildLayout()
         QPainterPath path;
         path.moveTo(start.x(), start.y());
 
-        //контрольная точка
+        // Контрольная точка
         qreal midX = ((start.x() + end.x()) / 2);
         qreal midY = ((start.y() + end.y()) / 2);
 
@@ -204,6 +203,155 @@ void CalorimeterScene::buildLayout()
     for(int i = 0; i < 4; i++){
         isActive[i] = true;
     }
+
+
+
+    QGraphicsItemGroup *crossSectionGroup = new QGraphicsItemGroup();
+
+    // Образец
+    QGraphicsRectItem *sampleSide = new QGraphicsRectItem(100, 300, 150, 200);
+    sampleSide->setBrush(QBrush(QColor("#bdc3c7")));
+    sampleSide->setPen(QPen(QColor("#7f8c8d"), 2));
+    crossSectionGroup->addToGroup(sampleSide);
+
+    // Нагреватель
+    QGraphicsRectItem *heater = new QGraphicsRectItem(100, 500, 150, 25);
+    heater->setBrush(QBrush(QColor("#e74c3c")));
+    heater->setPen(QPen(QColor("#c0392b"), 2));
+    crossSectionGroup->addToGroup(heater);
+
+    // Теплоизоляция
+    QGraphicsRectItem *wall_left = new QGraphicsRectItem(60, 300, 40, 225);
+    QGraphicsRectItem *wall_right = new QGraphicsRectItem(250, 300, 40, 225);
+    QGraphicsRectItem *wall_top = new QGraphicsRectItem(60, 270, 230, 30);
+    QGraphicsRectItem *wall_bot = new QGraphicsRectItem(60, 525, 230, 30);
+
+    wall_left->setBrush(QBrush(Qt::lightGray, Qt::BDiagPattern));
+    wall_right->setBrush(QBrush(Qt::lightGray, Qt::BDiagPattern));
+    wall_top->setBrush(QBrush(Qt::lightGray, Qt::BDiagPattern));
+    wall_bot->setBrush(QBrush(Qt::lightGray, Qt::BDiagPattern));
+
+    crossSectionGroup->addToGroup(wall_left);
+    crossSectionGroup->addToGroup(wall_right);
+    crossSectionGroup->addToGroup(wall_top);
+    crossSectionGroup->addToGroup(wall_bot);
+
+    // Порт для термопары
+    QGraphicsRectItem *port = new QGraphicsRectItem(170, 270, 11, 130);
+    port->setBrush(QBrush(Qt::white, Qt::Dense6Pattern));
+    crossSectionGroup->addToGroup(port);
+
+    // Термопара и её составляющие
+    QGraphicsRectItem *thermopara = new QGraphicsRectItem(172, 370, 7, 20);
+    thermopara->setBrush(QBrush(Qt::black));
+    crossSectionGroup->addToGroup(thermopara);
+
+    QPainterPath wirePath;
+    wirePath.moveTo(175, 370);
+    wirePath.lineTo(175, 240);
+    wirePath.cubicTo(175, 210, 120, 180, 60, 215);
+
+    QGraphicsPathItem *wire = new QGraphicsPathItem(wirePath);
+    wire->setPen(QPen(Qt::black, 2));
+    crossSectionGroup->addToGroup(wire);
+
+    DigitalDisplay *crossDisplay = new DigitalDisplay("T обр");
+    crossDisplay->setPos(10, 180);
+    crossSectionGroup->addToGroup(crossDisplay);
+
+    // Обозначения
+    QGraphicsTextItem *msg_1 = new QGraphicsTextItem("1");
+    msg_1->setPos(100, 150);
+    msg_1->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_1->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_1);
+    QGraphicsTextItem *msg_2 = new QGraphicsTextItem("2");
+    msg_2->setPos(330, 310);
+    msg_2->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_2->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_2);
+    QGraphicsTextItem *msg_3 = new QGraphicsTextItem("3");
+    msg_3->setPos(330, 400);
+    msg_3->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_3->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_3);
+    QGraphicsTextItem *msg_4 = new QGraphicsTextItem("4");
+    msg_4->setPos(20, 500);
+    msg_4->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_4->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_4);
+    QGraphicsTextItem *msg_5 = new QGraphicsTextItem("5");
+    msg_5->setPos(20, 300);
+    msg_5->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_5->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_5);
+    QGraphicsTextItem *msg_6 = new QGraphicsTextItem("6");
+    msg_6->setPos(20, 250);
+    msg_6->setFont(QFont("Arial", 12, QFont::Bold));
+    msg_6->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(msg_6);
+
+    QGraphicsLineItem *ptr1 = new QGraphicsLineItem(80, 180, 103, 170);
+    ptr1->setPen(QPen(Qt::black, 1));
+    ptr1->setZValue(10);
+    crossSectionGroup->addToGroup(ptr1);
+    QGraphicsLineItem *ptr2 = new QGraphicsLineItem(174, 375, 333, 323);
+    ptr2->setPen(QPen(Qt::black, 1));
+    ptr2->setZValue(10);
+    crossSectionGroup->addToGroup(ptr2);
+    QGraphicsLineItem *ptr3_1 = new QGraphicsLineItem(260, 400, 329, 410);
+    ptr3_1->setPen(QPen(Qt::black, 1));
+    ptr3_1->setZValue(10);
+    crossSectionGroup->addToGroup(ptr3_1);
+    QGraphicsLineItem *ptr3_2 = new QGraphicsLineItem(270, 540, 333, 420);
+    ptr3_2->setPen(QPen(Qt::black, 1));
+    ptr3_2->setZValue(10);
+    crossSectionGroup->addToGroup(ptr3_2);
+    QGraphicsLineItem *ptr4 = new QGraphicsLineItem(35, 513, 130, 515);
+    ptr4->setPen(QPen(Qt::black, 1));
+    ptr4->setZValue(10);
+    crossSectionGroup->addToGroup(ptr4);
+    QGraphicsLineItem *ptr5 = new QGraphicsLineItem(35, 314, 130, 340);
+    ptr5->setPen(QPen(Qt::black, 1));
+    ptr5->setZValue(10);
+    crossSectionGroup->addToGroup(ptr5);
+    QGraphicsLineItem *ptr6 = new QGraphicsLineItem(35, 263, 130, 280);
+    ptr6->setPen(QPen(Qt::black, 1));
+    ptr6->setZValue(10);
+    crossSectionGroup->addToGroup(ptr6);
+
+    QGraphicsTextItem *lg1 = new QGraphicsTextItem("1 - дисплей термометра");
+    lg1->setPos(30, 580);
+    lg1->setFont(QFont("Arial", 11, QFont::Bold));
+    lg1->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg1);
+    QGraphicsTextItem *lg2 = new QGraphicsTextItem("2 - датчик термометра");
+    lg2->setPos(30, 600);
+    lg2->setFont(QFont("Arial", 11, QFont::Bold));
+    lg2->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg2);
+    QGraphicsTextItem *lg3 = new QGraphicsTextItem("3 - теплоизоляция");
+    lg3->setPos(30, 620);
+    lg3->setFont(QFont("Arial", 11, QFont::Bold));
+    lg3->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg3);
+    QGraphicsTextItem *lg4 = new QGraphicsTextItem("4 - нагревательный элемент");
+    lg4->setPos(30, 640);
+    lg4->setFont(QFont("Arial", 11, QFont::Bold));
+    lg4->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg4);
+    QGraphicsTextItem *lg5 = new QGraphicsTextItem("5 - образец");
+    lg5->setPos(30, 660);
+    lg5->setFont(QFont("Arial", 11, QFont::Bold));
+    lg5->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg5);
+    QGraphicsTextItem *lg6 = new QGraphicsTextItem("6 - крышка калориметра");
+    lg6->setPos(30, 680);
+    lg6->setFont(QFont("Arial", 11, QFont::Bold));
+    lg6->setDefaultTextColor(Qt::black);
+    crossSectionGroup->addToGroup(lg6);
+
+    addItem(crossSectionGroup);
 }
 
 void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, double t4, double t0)
@@ -227,12 +375,12 @@ void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, doubl
             double deltaT = temps[i] - t0;
             displays[i]->setValue(deltaT);
             displays[i]->setPrefix("ΔT");
-            displays[i]->setTextColor(Qt::red);  // или другой цвет
+            displays[i]->setTextColor(Qt::red);
         } else {
             // Обычный режим
             displays[i]->setValue(temps[i]);
             displays[i]->setPrefix("T");
-            displays[i]->setTextColor(Qt::green);  // или стандартный
+            displays[i]->setTextColor(QColor("#00ff00"));
         }
     }
 

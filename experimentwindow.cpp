@@ -34,18 +34,16 @@ void ExperimentWindow::resizeEvent(QResizeEvent *event)
 void ExperimentWindow::fitSceneToView()
 {
     if (graphicsView && scene) {
-        // Получаем реальные границы объектов
+        // Берем реальные границы всех нарисованных объектов
         QRectF contentRect = scene->itemsBoundingRect();
 
-        // Добавляем небольшой отступ (10%)
-        qreal padding = qMin(contentRect.width(), contentRect.height()) * 0.1;
-        contentRect.adjust(-padding, -padding, padding, padding);
+        // МИНИМАЛЬНЫЙ отступ, чтобы установка стала МАКСИМАЛЬНО большой
+        contentRect.adjust(-2, -2, 2, 2);
 
         // Масштабируем вид под объекты
         graphicsView->fitInView(contentRect, Qt::KeepAspectRatio);
 
-        // ВАЖНО: Обновляем sceneRect под реальные объекты
-        // Это убирает возможность скролла
+        // Фиксируем границы сцены (это убирает скроллбары)
         scene->setSceneRect(contentRect);
 
         // Центрируем
@@ -59,7 +57,7 @@ void ExperimentWindow::setupUI()
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
 
-    QHBoxLayout *mainHLayout = new QHBoxLayout(central);  // ✅ ГОРИЗОНТАЛЬНЫЙ для всего окна
+    QHBoxLayout *mainHLayout = new QHBoxLayout(central);
     mainHLayout->setContentsMargins(0, 0, 0, 0);
     mainHLayout->setSpacing(0);
 

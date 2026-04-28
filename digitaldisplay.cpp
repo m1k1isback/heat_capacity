@@ -17,13 +17,15 @@ DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
     labelText->setFont(QFont("Arial", 11, QFont::Bold));
     labelText->setPos(5, 0);
     labelText->setZValue(2);
+    labelText->setPlainText(m_prefix + m_label);
 
     // Значение температуры
-    valueText = new QGraphicsTextItem("-- °C", this);
-    valueText->setDefaultTextColor(QColor("#00ff00")); // Ярко-зелёный цвет
+    valueText = new QGraphicsTextItem("0.0 °C", this);
+    valueText->setDefaultTextColor(QColor("#00ff00"));
     valueText->setFont(QFont("Courier New", 13, QFont::Bold));
-    valueText->setPos(-5, 16);
+    valueText->setPos(-3, 16);
     valueText->setZValue(2);
+
 }
 
 void DigitalDisplay::setValue(double value)
