@@ -53,6 +53,7 @@ private:
     QPushButton* write_point;
     QPushButton* stop;
     QPushButton* export_btn;
+    QPushButton* reset_btn;
 
     // --- Статус ---
     QLabel* phase;
@@ -63,6 +64,13 @@ private:
 
     // Внутренние методы сборки
     void setupUI();
+
+    // Для материалов
+    QVector<QComboBox*> m_sampleCombos;
+    QVector<QLabel*> m_sampleLabels;
 private slots:
     void setupConnections();
+
+    void onMaterialChanged(int sampleIndex, const QString& materialName);
+    void clearSampleLabel(int sampleIndex);
 };

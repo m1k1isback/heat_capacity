@@ -255,7 +255,7 @@ void CalorimeterScene::buildLayout()
     wire->setPen(QPen(Qt::black, 2));
     crossSectionGroup->addToGroup(wire);
 
-    DigitalDisplay *crossDisplay = new DigitalDisplay("T обр");
+    DigitalDisplay *crossDisplay = new DigitalDisplay("");
     crossDisplay->setPos(10, 180);
     crossSectionGroup->addToGroup(crossDisplay);
 

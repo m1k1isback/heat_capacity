@@ -1,4 +1,5 @@
 #include "controlpanelwidget.h"
+#include "material.h"
 
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -31,11 +32,11 @@ void ControlPanelWidget::setupUI()
     first_mat_combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     first_mat_spin = new QDoubleSpinBox(this);
-    first_mat_spin->setRange(0.1, 10000.0);  // Расширил диапазон до 10000
+    first_mat_spin->setRange(0.1, 10000.0);
     first_mat_spin->setValue(100.0);
     first_mat_spin->setDecimals(2);
     first_mat_spin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    first_mat_spin->setFixedWidth(120);  // Ширины хватит для "10000.00"
+    first_mat_spin->setFixedWidth(120);
     first_mat_spin->setFixedHeight(20);
 
     first_mat_label = new QLabel("Θ=___ К, ρ=___ г/см³", this);
@@ -45,6 +46,26 @@ void ControlPanelWidget::setupUI()
     sampleLayout->addRow(tr("Обр. 1:"), first_mat_combo);
     sampleLayout->addRow(tr("Масса, г:"), first_mat_spin);
     sampleLayout->addRow("", first_mat_label);
+
+    m_sampleCombos.append(first_mat_combo);
+    m_sampleLabels.append(first_mat_label);
+
+    first_mat_combo->clear();
+    first_mat_combo->addItem(tr("Выберите материал"));
+
+    for (const auto& mat : Material::registry()) {
+        first_mat_combo->addItem(mat.name());
+    }
+
+    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    connect(first_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
+            this, [this](const QString& text) {
+                if (text == tr("Выберите материал")) {
+                    clearSampleLabel(0);
+                } else {
+                    onMaterialChanged(0, text);
+                }
+            });
 
     // --- Образец 2 ---
     second_mat_combo = new QComboBox(this);
@@ -68,6 +89,27 @@ void ControlPanelWidget::setupUI()
     sampleLayout->addRow(tr("Масса, г:"), second_mat_spin);
     sampleLayout->addRow("", second_mat_label);
 
+
+    m_sampleCombos.append(second_mat_combo);
+    m_sampleLabels.append(second_mat_label);
+
+    second_mat_combo->clear();
+    second_mat_combo->addItem(tr("Выберите материал"));
+
+    for (const auto& mat : Material::registry()) {
+        second_mat_combo->addItem(mat.name());
+    }
+
+    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    connect(second_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
+            this, [this](const QString& text) {
+                if (text == tr("Выберите материал")) {
+                    clearSampleLabel(1);
+                } else {
+                    onMaterialChanged(1, text);
+                }
+            });
+
     // --- Образец 3 ---
     third_mat_combo = new QComboBox(this);
     third_mat_combo->addItem("Выберите материал");
@@ -90,6 +132,26 @@ void ControlPanelWidget::setupUI()
     sampleLayout->addRow(tr("Масса, г:"), third_mat_spin);
     sampleLayout->addRow("", third_mat_label);
 
+    m_sampleCombos.append(third_mat_combo);
+    m_sampleLabels.append(third_mat_label);
+
+    third_mat_combo->clear();
+    third_mat_combo->addItem(tr("Выберите материал"));
+
+    for (const auto& mat : Material::registry()) {
+        third_mat_combo->addItem(mat.name());
+    }
+
+    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    connect(third_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
+            this, [this](const QString& text) {
+                if (text == tr("Выберите материал")) {
+                    clearSampleLabel(2);
+                } else {
+                    onMaterialChanged(2, text);
+                }
+            });
+
     // --- Образец 4 ---
     fourth_mat_combo = new QComboBox(this);
     fourth_mat_combo->addItem("Выберите материал");
@@ -111,6 +173,27 @@ void ControlPanelWidget::setupUI()
     sampleLayout->addRow(tr("Обр. 4:"), fourth_mat_combo);
     sampleLayout->addRow(tr("Масса, г:"), fourth_mat_spin);
     sampleLayout->addRow("", fourth_mat_label);
+
+
+    m_sampleCombos.append(fourth_mat_combo);
+    m_sampleLabels.append(fourth_mat_label);
+
+    fourth_mat_combo->clear();
+    fourth_mat_combo->addItem(tr("Выберите материал"));
+
+    for (const auto& mat : Material::registry()) {
+        fourth_mat_combo->addItem(mat.name());
+    }
+
+    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    connect(fourth_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
+            this, [this](const QString& text) {
+                if (text == tr("Выберите материал")) {
+                    clearSampleLabel(3);
+                } else {
+                    onMaterialChanged(3, text);
+                }
+            });
 
     m_mainLayout->addWidget(m_sampleGroup);
 
@@ -162,16 +245,15 @@ void ControlPanelWidget::setupUI()
 
     nagrev = new QPushButton(tr("Нагрев"), this);
     termostat = new QPushButton(tr("Термостатирование"), this);
-    stop = new QPushButton(tr("Стоп"), this);
+    //stop = new QPushButton(tr("Стоп"), this);
     write_point = new QPushButton(tr("Записать точку"), this);
     export_btn = new QPushButton(tr("Экспортировать в XLS"), this);
-    start = new QPushButton(tr("Старт"), this);
+    reset_btn = new QPushButton(tr("Сброс"), this);
 
-    manageLayout->addWidget(start);
-    manageLayout->addWidget(stop);
     manageLayout->addWidget(nagrev);
     manageLayout->addWidget(termostat);
     manageLayout->addWidget(write_point);
+    manageLayout->addWidget(reset_btn);
     manageLayout->addWidget(export_btn);
 
     m_mainLayout->addWidget(m_controlGroup);
@@ -203,4 +285,54 @@ void ControlPanelWidget::setupConnections()
     // Позже здесь будут связи кнопок со слотами через connect()
     // Пример (не копируйте, разберём позже):
     // connect(m_btnHeat, &QPushButton::clicked, this, &ControlPanelWidget::onHeatClicked);
+}
+
+void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
+{
+    // 1. Проверка: индекс должен быть от 0 до 3. Иначе — выходим, чтобы не было краша.
+    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
+        return;
+    }
+
+    // 2. Ищем материал в реестре по точному совпадению имени.
+    // findByName возвращает std::optional<Material>
+    auto materialOpt = Material::findByName(materialName);
+
+    // 3. Если материал не найден (например, опечатка или синхронизация сбита) — выходим.
+    if (!materialOpt.has_value()) {
+        return;
+    }
+
+    // 4. Извлекаем сам объект материала.
+    const Material& mat = materialOpt.value();
+
+    // 5. Получаем указатель на метку, соответствующую этому образцу.
+    QLabel* label = m_sampleLabels[sampleIndex];
+    if (!label) {
+        return; // Защита от nullptr
+    }
+
+    // 6. Формируем строку.
+    // %1 подставит температуру Дебая, %2 — плотность.
+    // 'f' = обычный дробный формат, 1 и 2 = знаков после запятой.
+    QString infoText = QString("Θ=%1 К, ρ=%2 г/см³")
+                           .arg(mat.debyeTemperature(), 0, 'f', 1)
+                           .arg(mat.densityGcm3(), 0, 'f', 2);
+
+    // 7. Обновляем текст на экране.
+    label->setText(infoText);
+}
+
+void ControlPanelWidget::clearSampleLabel(int sampleIndex)
+{
+    // Аналогичная защита от некорректного индекса
+    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
+        return;
+    }
+
+    QLabel* label = m_sampleLabels[sampleIndex];
+    if (label) {
+        // Возвращаем исходный шаблон, пока материал не выбран
+        label->setText("Θ=___ К, ρ=___ г/см³");
+    }
 }
