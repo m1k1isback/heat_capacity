@@ -245,7 +245,6 @@ void ControlPanelWidget::setupUI()
 
     nagrev = new QPushButton(tr("Нагрев"), this);
     termostat = new QPushButton(tr("Термостатирование"), this);
-    //stop = new QPushButton(tr("Стоп"), this);
     write_point = new QPushButton(tr("Записать точку"), this);
     export_btn = new QPushButton(tr("Экспортировать в XLS"), this);
     reset_btn = new QPushButton(tr("Сброс"), this);

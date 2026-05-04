@@ -30,6 +30,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         material.h material.cpp
         controlpanelwidget.h controlpanelwidget.cpp
         sample.h sample.cpp
+        physicsengine.h physicsengine.cpp
     )
 else()
     if(ANDROID)
