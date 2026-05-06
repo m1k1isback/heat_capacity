@@ -1,5 +1,6 @@
 #pragma once
 #include <QWidget>
+#include "physicsengine.h"
 
 class QVBoxLayout;
 class QGroupBox;
@@ -17,6 +18,10 @@ class ControlPanelWidget : public QWidget
 public:
     explicit ControlPanelWidget(QWidget* parent = nullptr);
     ~ControlPanelWidget() override = default;
+
+    PhysicsEngine* getEngine() const { return m_engine; }
+signals:
+    void environmentTemperatureSet(double t0);
 
 private:
     // --- Контейнеры (группы) ---
@@ -58,6 +63,7 @@ private:
     // --- Статус ---
     QLabel* phase;
     QLabel* time;
+    QLabel* pointsLabel;
 
     // Основной компоновщик
     QVBoxLayout* m_mainLayout;
@@ -68,9 +74,19 @@ private:
     // Для материалов
     QVector<QComboBox*> m_sampleCombos;
     QVector<QLabel*> m_sampleLabels;
+
+    PhysicsEngine* m_engine;
 private slots:
     void setupConnections();
 
     void onMaterialChanged(int sampleIndex, const QString& materialName);
     void clearSampleLabel(int sampleIndex);
+
+    void onStartHeatingClicked();
+    QVector<Sample> gatherSamples() const;
+
+    void onStateChanged(ExperimentState state);
+
+    void onTimeUpdated(int seconds);
+    void onPointsCountUpdated(int count);
 };

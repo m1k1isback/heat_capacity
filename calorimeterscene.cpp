@@ -10,12 +10,15 @@
 CalorimeterScene::CalorimeterScene(QObject *parent)
     : QGraphicsScene(parent)
 {
-    m_lastT0 = 0.0;
+    m_lastT0 = 20.0;
     for(int i = 0; i < 4; ++i) {
         m_lastSampleTemps[i] = 0.0;
     }
 
     buildLayout();
+    // === НОВОЕ: Принудительно обновляем дисплеи при старте ===
+    // Это покажет 20.00 сразу, до нажатия кнопок
+    updateTemperatures(20.0, 20.0, 20.0, 20.0, 20.0);
 }
 
 void CalorimeterScene::buildLayout()
@@ -204,8 +207,6 @@ void CalorimeterScene::buildLayout()
         isActive[i] = true;
     }
 
-
-
     QGraphicsItemGroup *crossSectionGroup = new QGraphicsItemGroup();
 
     // Образец
@@ -362,29 +363,31 @@ void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, doubl
     m_lastSampleTemps[3] = t4;
     m_lastT0 = t0;
 
-    double  temps[] = {t1, t2, t3, t4, t0};
+    double temps[] = {t1, t2, t3, t4, t0};
 
     for(int i = 0; i < 4; i++) {
+        if (!displays[i]) continue;
+
         if(!isActive[i]) {
             displays[i]->setValue(0.0);
             continue;
         }
 
         if(m_isDifferentialMode[i]) {
-            // Дифференциальный режим
             double deltaT = temps[i] - t0;
             displays[i]->setValue(deltaT);
             displays[i]->setPrefix("ΔT");
             displays[i]->setTextColor(Qt::red);
         } else {
-            // Обычный режим
             displays[i]->setValue(temps[i]);
             displays[i]->setPrefix("T");
             displays[i]->setTextColor(QColor("#00ff00"));
         }
     }
 
-    displays[4]->setValue(t0);
+    if (displays[4]) {
+        displays[4]->setValue(t0);
+    }
 }
 
 void CalorimeterScene::checkSample(int index, bool  checked){
@@ -416,4 +419,21 @@ void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, 
         displays[sampleIndex]->setPrefix("T");
         displays[sampleIndex]->setTextColor(Qt::green);
 }
+}
+
+// === Сеттер для температуры среды ===
+void CalorimeterScene::setEnvironmentTemperature(double t0)
+{
+    m_lastT0 = t0;
+    // Если у тебя есть дисплей для T0 (displays[4]), раскомментируй:
+    // if (displays[4]) displays[4]->setValue(t0);
+}
+
+void CalorimeterScene::onPhysicsTemperaturesUpdated(const QVector<double>& temps, int elapsedSec)
+{
+    Q_UNUSED(elapsedSec);
+
+    if (temps.size() >= 4) {
+        updateTemperatures(temps[0], temps[1], temps[2], temps[3], m_lastT0);
+    }
 }

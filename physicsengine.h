@@ -21,12 +21,15 @@ signals:
     void temperaturesUpdated(QVector<double> newTemps, int elapsedSec);
     void stateChanged(ExperimentState newState);
     void pointRecorded(int pointIndex, double currentTimeSec, QVector<double> temps);
+
+    void timeUpdated(int totalSeconds);       // Для обновления таймера
+    void pointsCountUpdated(int count);
 private slots:
     void onTimerTick();
 private:
     QTimer* m_timer;
-    int m_elapsedSec; //время эксперимента
-    int m_coolingStartSec; //секунда, когда началось остывание
+    double m_elapsedSec; //время эксперимента
+    double m_coolingStartSec; //секунда, когда началось остывание
     ExperimentState m_state; // текущая фаза
     double m_envTemp; // температура среды
     QVector<Sample> m_samples; //копия массива образцов с их текущими температурами.
@@ -34,4 +37,5 @@ private:
 
     static constexpr double K_CONST = 5.20;  // Дж/(мин·К)
     static constexpr double C_K = 210.0;     // Дж/К
+    double m_T1_CoolingStart = 60.0;
 };

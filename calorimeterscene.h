@@ -13,15 +13,17 @@ class CalorimeterScene : public QGraphicsScene
 public:
     explicit CalorimeterScene(QObject *parent = nullptr);
     void buildLayout();
+    void setEnvironmentTemperature(double t0);
 
 public slots:
     // Этот слот будет принимать данные от физического движка
     void updateTemperatures(double t1, double t2, double t3, double t4, double t0);
     void checkSample(int a, bool checked);
+    void onPhysicsTemperaturesUpdated(const QVector<double>& temps, int elapsedSec);
 
 private:
     // Массив указателей на дисплеи: [0]-T1, [1]-T2, [2]-T3, [3]-T4, [4]-T0
-    DigitalDisplay *displays[5];
+    DigitalDisplay *displays[5] = {nullptr, nullptr, nullptr, nullptr, nullptr};
 
     bool isActive[4];
     QCheckBox* checkBoxes[4];
@@ -37,6 +39,7 @@ private:
 private slots:
     void onDifferentialModeToggled(int sampleIndex, bool enabled);
     void updateDisplayForSample(int sampleIndex, double T_sample, double T0);
+
 };
 
 #endif // CALORIMETERSCENE_H

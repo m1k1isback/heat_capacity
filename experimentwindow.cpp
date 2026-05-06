@@ -34,19 +34,10 @@ void ExperimentWindow::resizeEvent(QResizeEvent *event)
 void ExperimentWindow::fitSceneToView()
 {
     if (graphicsView && scene) {
-        // Берем реальные границы всех нарисованных объектов
         QRectF contentRect = scene->itemsBoundingRect();
-
-        // МИНИМАЛЬНЫЙ отступ, чтобы установка стала МАКСИМАЛЬНО большой
         contentRect.adjust(-2, -2, 2, 2);
-
-        // Масштабируем вид под объекты
         graphicsView->fitInView(contentRect, Qt::KeepAspectRatio);
-
-        // Фиксируем границы сцены (это убирает скроллбары)
         scene->setSceneRect(contentRect);
-
-        // Центрируем
         graphicsView->centerOn(contentRect.center());
     }
 }
@@ -96,7 +87,7 @@ void ExperimentWindow::setupUI()
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tableWidget->setStyleSheet("background-color: white;");
     tableWidget->setMinimumHeight(120);
-    tableWidget->setMaximumHeight(200);  // ✅ Ограничиваем высоту таблицы
+    tableWidget->setMaximumHeight(200);
     tableWidget->verticalHeader()->setVisible(false);
 
     tableLayout->addWidget(tableWidget);
@@ -107,8 +98,22 @@ void ExperimentWindow::setupUI()
 
     // === 3. ПРАВАЯ ЧАСТЬ ОКНА (панель управления на всю высоту) ===
     auto* controlPanel = new ControlPanelWidget(this);
-    controlPanel->setMinimumWidth(350);  // ✅ Делаем панель шире (было 280)
-    controlPanel->setMaximumWidth(450);  // ✅ Но не даём стать слишком широкой
+    controlPanel->setMinimumWidth(350);
+    controlPanel->setMaximumWidth(450);
 
     mainHLayout->addWidget(controlPanel, 1);  // 1 = 20% ширины окна
+
+
+    // 1. Подключаем сигнал температур от движка к сцене
+    connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,
+            scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
+
+    connect(controlPanel, &ControlPanelWidget::environmentTemperatureSet,
+            scene, &CalorimeterScene::setEnvironmentTemperature);
+
+    // 1. Подключаем сигнал температур
+    auto conn = connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,
+                        scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
+
+
 }

@@ -14,6 +14,7 @@ ControlPanelWidget::ControlPanelWidget(QWidget* parent)
     : QWidget(parent)
 {
     setupUI();
+    m_engine = new PhysicsEngine(this);
     setupConnections();
 }
 
@@ -201,7 +202,6 @@ void ControlPanelWidget::setupUI()
     // === Группа "Параметры среды" ===
     m_envGroup = new QGroupBox(tr("Параметры среды"), this);
 
-    // ИСПРАВЛЕНИЕ: Используем QFormLayout, чтобы лейбл и поле были в одну строку
     QFormLayout* envLayout = new QFormLayout(m_envGroup);
 
     T0 = new QDoubleSpinBox(this);
@@ -268,7 +268,7 @@ void ControlPanelWidget::setupUI()
     time = new QLabel(tr("00:00"), this);
     statusLayout->addRow(tr("Время:"), time);
 
-    auto* pointsLabel = new QLabel("0", this);
+    pointsLabel = new QLabel("0", this);
     statusLayout->addRow(tr("Точек:"), pointsLabel);
 
     m_mainLayout->addWidget(m_statusGroup);
@@ -280,58 +280,157 @@ void ControlPanelWidget::setupUI()
 
 void ControlPanelWidget::setupConnections()
 {
-    // Этот метод пока оставьте пустым.
-    // Позже здесь будут связи кнопок со слотами через connect()
-    // Пример (не копируйте, разберём позже):
-    // connect(m_btnHeat, &QPushButton::clicked, this, &ControlPanelWidget::onHeatClicked);
+    // Подключаем кнопки к методам движка
+    connect(nagrev, &QPushButton::clicked, this, &ControlPanelWidget::onStartHeatingClicked);
+
+    connect(termostat, &QPushButton::clicked,
+            m_engine, &PhysicsEngine::startThermostatting);
+
+    connect(write_point, &QPushButton::clicked,
+            m_engine, &PhysicsEngine::recordPoint);
+
+    connect(reset_btn, &QPushButton::clicked,
+            m_engine, &PhysicsEngine::reset);
+
+    connect(m_engine, &PhysicsEngine::stateChanged,
+            this, &ControlPanelWidget::onStateChanged);
+
+    connect(m_engine, &PhysicsEngine::timeUpdated,
+            this, &ControlPanelWidget::onTimeUpdated);
+
+    // 2. Счетчик точек
+    connect(m_engine, &PhysicsEngine::pointsCountUpdated,
+            this, &ControlPanelWidget::onPointsCountUpdated);
 }
 
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
 {
-    // 1. Проверка: индекс должен быть от 0 до 3. Иначе — выходим, чтобы не было краша.
     if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
         return;
     }
 
     // 2. Ищем материал в реестре по точному совпадению имени.
-    // findByName возвращает std::optional<Material>
     auto materialOpt = Material::findByName(materialName);
-
-    // 3. Если материал не найден (например, опечатка или синхронизация сбита) — выходим.
     if (!materialOpt.has_value()) {
         return;
     }
 
-    // 4. Извлекаем сам объект материала.
     const Material& mat = materialOpt.value();
 
-    // 5. Получаем указатель на метку, соответствующую этому образцу.
     QLabel* label = m_sampleLabels[sampleIndex];
     if (!label) {
-        return; // Защита от nullptr
+        return;
     }
 
-    // 6. Формируем строку.
-    // %1 подставит температуру Дебая, %2 — плотность.
-    // 'f' = обычный дробный формат, 1 и 2 = знаков после запятой.
+    // Формируем строку.
     QString infoText = QString("Θ=%1 К, ρ=%2 г/см³")
                            .arg(mat.debyeTemperature(), 0, 'f', 1)
                            .arg(mat.densityGcm3(), 0, 'f', 2);
 
-    // 7. Обновляем текст на экране.
     label->setText(infoText);
 }
 
 void ControlPanelWidget::clearSampleLabel(int sampleIndex)
 {
-    // Аналогичная защита от некорректного индекса
     if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
         return;
     }
 
     QLabel* label = m_sampleLabels[sampleIndex];
     if (label) {
-        // Возвращаем исходный шаблон, пока материал не выбран
         label->setText("Θ=___ К, ρ=___ г/см³");
     }
+}
+
+QVector<Sample> ControlPanelWidget::gatherSamples() const
+{
+    QVector<Sample> samples(4);
+
+    if(first_mat_combo->currentText() != "Выберите материал"){
+        QString material = first_mat_combo->currentText();
+        auto matOpt = Material::findByName(material);
+        if(matOpt.has_value()){
+            double mass = first_mat_spin->value();
+            samples[0] = Sample(0, matOpt.value(), mass);
+            samples[0].isActive = true;
+        }
+    }
+
+    if(second_mat_combo->currentText() != "Выберите материал"){
+        QString material = second_mat_combo->currentText();
+        auto matOpt = Material::findByName(material);
+        if(matOpt.has_value()){
+            double mass = second_mat_spin->value();
+            samples[1] = Sample(1, matOpt.value(), mass);
+            samples[1].isActive = true;
+        }
+    }
+
+    if(third_mat_combo->currentText() != "Выберите материал"){
+        QString material = third_mat_combo->currentText();
+        auto matOpt = Material::findByName(material);
+        if(matOpt.has_value()){
+            double mass = third_mat_spin->value();
+            samples[2] = Sample(2, matOpt.value(), mass);
+            samples[2].isActive = true;
+        }
+    }
+
+    if(fourth_mat_combo->currentText() != "Выберите материал"){
+        QString material = fourth_mat_combo->currentText();
+        auto matOpt = Material::findByName(material);
+        if(matOpt.has_value()){
+            double mass = fourth_mat_spin->value();
+            samples[3] = Sample(3, matOpt.value(), mass);
+            samples[3].isActive = true;
+        }
+    }
+
+    return samples;
+}
+
+void ControlPanelWidget::onStartHeatingClicked()
+{
+    QVector<Sample> samples = gatherSamples();
+    double t0 = T0->value();
+    m_engine->configure(t0, samples);
+    emit environmentTemperatureSet(t0);
+    m_engine->startHeating();
+}
+
+void ControlPanelWidget::onStateChanged(ExperimentState state)
+{
+    // В зависимости от значения enum, меняем текст метки
+    switch (state) {
+    case ExperimentState::Idle:
+        phase->setText("Ожидание");
+        break;
+    case ExperimentState::Heating:
+        phase->setText("Нагрев");
+        break;
+    case ExperimentState::Thermostate:
+        phase->setText("Термостатирование");
+        break;
+    case ExperimentState::Cooling:
+        phase->setText("Остывание");
+        break;
+    }
+}
+
+void ControlPanelWidget::onTimeUpdated(int seconds)
+{
+    int minutes = seconds / 60;
+    int remainingSeconds = seconds % 60;
+
+    // Форматируем как 00:00
+    QString timeString = QString("%1:%2")
+                             .arg(minutes, 2, 10, QChar('0'))
+                             .arg(remainingSeconds, 2, 10, QChar('0'));
+
+    time->setText(timeString);
+}
+
+void ControlPanelWidget::onPointsCountUpdated(int count)
+{
+    pointsLabel->setText(QString::number(count));
 }
