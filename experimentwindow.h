@@ -39,6 +39,10 @@ private:
 
     int rowCount;
     int currentTime;
+private slots:
+    void onPointRecorded(int id, double time, const QVector<double>& temps);
+
+    void onExportRequested();
 };
 
 #endif // EXPERIMENTWINDOW_H

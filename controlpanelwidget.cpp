@@ -276,6 +276,7 @@ void ControlPanelWidget::setupUI()
     m_mainLayout->addStretch();
 
     setMinimumWidth(280);
+
 }
 
 void ControlPanelWidget::setupConnections()
@@ -301,6 +302,9 @@ void ControlPanelWidget::setupConnections()
     // 2. Счетчик точек
     connect(m_engine, &PhysicsEngine::pointsCountUpdated,
             this, &ControlPanelWidget::onPointsCountUpdated);
+
+    connect(export_btn, &QPushButton::clicked,
+            this, &ControlPanelWidget::exportRequested);
 }
 
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
@@ -434,3 +438,5 @@ void ControlPanelWidget::onPointsCountUpdated(int count)
 {
     pointsLabel->setText(QString::number(count));
 }
+
+

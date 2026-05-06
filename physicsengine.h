@@ -18,7 +18,7 @@ public:
     void recordPoint();
     void reset();
 signals:
-    void temperaturesUpdated(QVector<double> newTemps, int elapsedSec);
+    void temperaturesUpdated(QVector<double> newTemps, double elapsedSec);
     void stateChanged(ExperimentState newState);
     void pointRecorded(int pointIndex, double currentTimeSec, QVector<double> temps);
 

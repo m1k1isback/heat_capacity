@@ -8,6 +8,7 @@
 #include <QGraphicsView>
 #include <QResizeEvent>
 #include <QTimer>
+#include <QFileDialog>
 
 ExperimentWindow::ExperimentWindow(MainWindow *parentWindow, QWidget *parent)
     : QMainWindow(parent), mainWindowPtr(parentWindow), rowCount(0), currentTime(0)
@@ -115,5 +116,77 @@ void ExperimentWindow::setupUI()
     auto conn = connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,
                         scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
 
+    connect(controlPanel->getEngine(), &PhysicsEngine::pointRecorded,
+            this, &ExperimentWindow::onPointRecorded);
 
+    connect(controlPanel, &ControlPanelWidget::exportRequested,
+            this, &ExperimentWindow::onExportRequested);
 }
+
+void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps){
+    int newRow = tableWidget->rowCount();
+    tableWidget->insertRow(newRow);
+
+    tableWidget->setItem(newRow, 0, new QTableWidgetItem(QString::number(id)));
+    tableWidget->setItem(newRow, 1, new QTableWidgetItem(QString::number(time, 'f', 2)));
+
+    // 4. Запиши T1, T2, T3, T4 (колонки 2, 3, 4, 5)
+    for(int i = 0; i < 4; i++){
+        int column = i + 2;
+        tableWidget->setItem(newRow, column, new QTableWidgetItem(QString::number(temps[i], 'f', 3)));
+    }
+    qDebug() << "Записана точка #" << id << "в строку" << newRow;
+}
+
+void ExperimentWindow::onExportRequested(){
+    QString fileName = QFileDialog::getSaveFileName(this, "Экспорт в Excel", "", "CSV Files (*.csv);;Text Files (*.txt)" );
+    if (fileName.isEmpty()) return;
+
+    QFile file(fileName);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
+        QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл!");
+        return;
+    }
+
+    QTextStream stream(&file);
+      // stream.setCodec("UTF-8"); // Можно включить, если русские буквы будут кракозябрами
+    //stream.setCodec("UTF-8");
+    stream.setGenerateByteOrderMark(true);
+
+    // 2. Записываем ЗАГОЛОВКИ (№, Время, T1...)
+    for (int col = 0; col < tableWidget->columnCount(); ++col) {
+        QTableWidgetItem *headerItem = tableWidget->horizontalHeaderItem(col);
+
+        // 2. Если заголовок существует, берем его текст и пишем в файл
+        if (headerItem) {
+            stream << headerItem->text() << ";";
+        } else {
+            // На всякий случай, если заголовка нет, пишем пустоту
+            stream << "\;";
+        }
+    }
+    stream << "\n"; // Переход на новую строку после заголовков
+
+    // 3. Записываем ДАННЫЕ (строки таблицы)
+    for (int row = 0; row < tableWidget->rowCount(); ++row) {
+        for (int col = 0; col < tableWidget->columnCount(); ++col) {
+            QTableWidgetItem* item = tableWidget->item(row, col);
+            if (item) {
+                QString text = item->text();
+
+                if (col > 0) {
+                    text.replace('.', ',');
+                }
+
+                stream << text << ";";
+            } else {
+                stream << ";";
+            }
+        }
+        stream << "\n";
+    }
+
+    file.close();
+    QMessageBox::information(this, "Успех", "Данные успешно экспортированы!");
+}
+

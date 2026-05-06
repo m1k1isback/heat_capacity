@@ -23,6 +23,8 @@ public:
 signals:
     void environmentTemperatureSet(double t0);
 
+    void exportRequested();
+
 private:
     // --- Контейнеры (группы) ---
     QGroupBox* m_sampleGroup;
@@ -89,4 +91,5 @@ private slots:
 
     void onTimeUpdated(int seconds);
     void onPointsCountUpdated(int count);
+
 };
