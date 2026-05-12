@@ -9,6 +9,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QLabel>
+#include <QMessageBox>
 
 ControlPanelWidget::ControlPanelWidget(QWidget* parent)
     : QWidget(parent)
@@ -268,6 +269,9 @@ void ControlPanelWidget::setupUI()
     time = new QLabel(tr("00:00"), this);
     statusLayout->addRow(tr("Время:"), time);
 
+    m_coolingTimeLabel = new QLabel(tr("00:00"), this);
+    statusLayout->addRow(tr("Время остывания:"), m_coolingTimeLabel);
+
     pointsLabel = new QLabel("0", this);
     statusLayout->addRow(tr("Точек:"), pointsLabel);
 
@@ -305,6 +309,9 @@ void ControlPanelWidget::setupConnections()
 
     connect(export_btn, &QPushButton::clicked,
             this, &ControlPanelWidget::exportRequested);
+
+    connect(m_engine, &PhysicsEngine::coolingTimeUpdated,
+            this, &ControlPanelWidget::onCoolingTimeUpdated);
 }
 
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
@@ -395,11 +402,32 @@ QVector<Sample> ControlPanelWidget::gatherSamples() const
 
 void ControlPanelWidget::onStartHeatingClicked()
 {
+    bool Named = false;
+    for(int i = 0; i < 4; i++){
+        QString name = m_sampleCombos[i]->currentText();
+        if(name != "Выберите материал"){
+            Named = true;
+            break;
+        }
+    }
+    if(Named == false){
+        QMessageBox::warning(this, "Ошибка", "Выберите хотя бы 1 образец!");
+        return;
+    }
+
     QVector<Sample> samples = gatherSamples();
+    QVector<bool> actives;
+    for(int i = 0; i < 4; i++){
+        bool check = samples[i].isActive;
+        actives.append(check);
+    }
+    emit samplesStatusUpdated(actives);
+
     double t0 = T0->value();
     m_engine->configure(t0, samples);
     emit environmentTemperatureSet(t0);
     m_engine->startHeating();
+
 }
 
 void ControlPanelWidget::onStateChanged(ExperimentState state)
@@ -417,6 +445,10 @@ void ControlPanelWidget::onStateChanged(ExperimentState state)
         break;
     case ExperimentState::Cooling:
         phase->setText("Остывание");
+        break;
+    default:
+        m_coolingTimeLabel->setVisible(false);
+        m_coolingTimeLabel->setText("00:00");
         break;
     }
 }
@@ -439,4 +471,16 @@ void ControlPanelWidget::onPointsCountUpdated(int count)
     pointsLabel->setText(QString::number(count));
 }
 
+void ControlPanelWidget::onCoolingTimeUpdated(double timeSec)
+{
+    int totalSeconds = static_cast<int>(timeSec);  // Отбрасываем доли
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
 
+    // Форматируем как 00:00 с ведущими нулями
+    QString timeString = QString("%1:%2")
+                             .arg(minutes, 2, 10, QChar('0'))
+                             .arg(seconds, 2, 10, QChar('0'));
+
+    m_coolingTimeLabel->setText(timeString);  // ✅ Только время, без префикса!
+}

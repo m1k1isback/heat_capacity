@@ -21,6 +21,7 @@ signals:
     void temperaturesUpdated(QVector<double> newTemps, double elapsedSec);
     void stateChanged(ExperimentState newState);
     void pointRecorded(int pointIndex, double currentTimeSec, QVector<double> temps);
+    void coolingTimeUpdated(double timeSec);
 
     void timeUpdated(int totalSeconds);       // Для обновления таймера
     void pointsCountUpdated(int count);
@@ -34,6 +35,7 @@ private:
     double m_envTemp; // температура среды
     QVector<Sample> m_samples; //копия массива образцов с их текущими температурами.
     int m_pointCount; // сколько записанных точек
+    double m_coolingTimeSec;
 
     static constexpr double K_CONST = 5.20;  // Дж/(мин·К)
     static constexpr double C_K = 210.0;     // Дж/К

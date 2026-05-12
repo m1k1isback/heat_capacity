@@ -6,7 +6,7 @@ DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
     : QGraphicsItemGroup(parent), m_label(label), m_prefix("T")
 {
     // Фон дисплея
-    bgRect = new QGraphicsRectItem(0, 0, 80, 40, this);
+    bgRect = new QGraphicsRectItem(0, 0, 100, 50, this);
     bgRect->setBrush(QBrush(QColor("#1a1a2e"))); // Тёмно-синий фон
     bgRect->setPen(QPen(QColor("#444444"), 1));
     bgRect->setZValue(1);
@@ -20,7 +20,7 @@ DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
     labelText->setPlainText(m_prefix + m_label);
 
     // Значение температуры
-    valueText = new QGraphicsTextItem("0.000°C", this);
+    valueText = new QGraphicsTextItem("0.00°C", this);
     valueText->setDefaultTextColor(QColor("#00ff00"));
     valueText->setFont(QFont("Courier New", 13, QFont::Bold));
     valueText->setPos(-3, 16);
@@ -30,7 +30,7 @@ DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
 
 void DigitalDisplay::setValue(double value)
 {
-    valueText->setPlainText(QString("%1 °C").arg(value, 5, 'f', 3));
+    valueText->setPlainText(QString("%1 °C").arg(value, 5, 'f', 2));
 }
 // Замена префикса в дисплее
 void DigitalDisplay::setPrefix(const QString &prefix)

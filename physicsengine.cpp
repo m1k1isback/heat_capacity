@@ -67,6 +67,7 @@ void PhysicsEngine::recordPoint()
             }
         }
 
+        m_coolingTimeSec = 0;
         // Отправляем сигнал ОДИН раз, после всех изменений
         emit stateChanged(m_state);
     }
@@ -119,6 +120,10 @@ void PhysicsEngine::onTimerTick()
 
     bool tempsChanged = false;
 
+    if(m_state == ExperimentState::Cooling){
+        m_coolingTimeSec += 0.001;
+    }
+
     switch (m_state) {
     case ExperimentState::Heating: {
         // === Нагрев ===
@@ -138,7 +143,8 @@ void PhysicsEngine::onTimerTick()
 
     case ExperimentState::Cooling: {
         // === Остывание ===
-        double t_min = (m_elapsedSec - m_coolingStartSec) / 60.0; // Время в минутах
+        double t_min = m_coolingTimeSec / 60.0; // Время в минутах
+        emit coolingTimeUpdated(m_coolingTimeSec);
 
         for(int i = 0; i < m_samples.size(); i++){
             if(m_samples[i].isActive){

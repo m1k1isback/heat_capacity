@@ -43,6 +43,8 @@ private slots:
     void onPointRecorded(int id, double time, const QVector<double>& temps);
 
     void onExportRequested();
+
+    void onSamplesStatusUpdated(const QVector<bool>& statuses);
 };
 
 #endif // EXPERIMENTWINDOW_H

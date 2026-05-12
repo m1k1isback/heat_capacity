@@ -25,6 +25,8 @@ signals:
 
     void exportRequested();
 
+    void samplesStatusUpdated(const QVector<bool>& statuses);
+
 private:
     // --- Контейнеры (группы) ---
     QGroupBox* m_sampleGroup;
@@ -66,6 +68,7 @@ private:
     QLabel* phase;
     QLabel* time;
     QLabel* pointsLabel;
+    QLabel* m_coolingTimeLabel;
 
     // Основной компоновщик
     QVBoxLayout* m_mainLayout;
@@ -91,5 +94,7 @@ private slots:
 
     void onTimeUpdated(int seconds);
     void onPointsCountUpdated(int count);
+
+    void onCoolingTimeUpdated(double timeSec);
 
 };

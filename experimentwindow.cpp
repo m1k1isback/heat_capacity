@@ -121,6 +121,10 @@ void ExperimentWindow::setupUI()
 
     connect(controlPanel, &ControlPanelWidget::exportRequested,
             this, &ExperimentWindow::onExportRequested);
+
+    connect(controlPanel, &ControlPanelWidget::samplesStatusUpdated,
+            this, &ExperimentWindow::onSamplesStatusUpdated);
+
 }
 
 void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps){
@@ -153,40 +157,48 @@ void ExperimentWindow::onExportRequested(){
     //stream.setCodec("UTF-8");
     stream.setGenerateByteOrderMark(true);
 
-    // 2. Записываем ЗАГОЛОВКИ (№, Время, T1...)
+    // === Цикл ЗАГОЛОВКОВ ===
     for (int col = 0; col < tableWidget->columnCount(); ++col) {
+        if (tableWidget->isColumnHidden(col)) continue;
+
         QTableWidgetItem *headerItem = tableWidget->horizontalHeaderItem(col);
-
-        // 2. Если заголовок существует, берем его текст и пишем в файл
-        if (headerItem) {
-            stream << headerItem->text() << ";";
-        } else {
-            // На всякий случай, если заголовка нет, пишем пустоту
-            stream << "\;";
-        }
+        stream << (headerItem ? headerItem->text() : "") << ";";
     }
-    stream << "\n"; // Переход на новую строку после заголовков
+    stream << "\n";  // ← ЭТОТ ПЕРЕНОС СТРОКИ ОБЯЗАТЕЛЕН!
 
-    // 3. Записываем ДАННЫЕ (строки таблицы)
+    // === Цикл ДАННЫХ ===
     for (int row = 0; row < tableWidget->rowCount(); ++row) {
         for (int col = 0; col < tableWidget->columnCount(); ++col) {
+            if (tableWidget->isColumnHidden(col)) continue;
+
             QTableWidgetItem* item = tableWidget->item(row, col);
             if (item) {
                 QString text = item->text();
-
-                if (col > 0) {
+                if (col >= 1) {
                     text.replace('.', ',');
                 }
-
                 stream << text << ";";
             } else {
                 stream << ";";
             }
         }
-        stream << "\n";
+        stream << "\n";  // ← Перенос после каждой строки данных
     }
 
     file.close();
     QMessageBox::information(this, "Успех", "Данные успешно экспортированы!");
 }
 
+void ExperimentWindow::onSamplesStatusUpdated(const QVector<bool>& statuses){
+    for (int i = 0; i < statuses.size(); ++i) {
+        int col = i + 2; // Сдвиг на 2, т.к. первые два столбца — № и Время
+
+        if (statuses[i]) {
+            // Образец активен → показываем столбец
+            tableWidget->showColumn(col);
+        } else {
+            // Образец не выбран → скрываем столбец
+            tableWidget->hideColumn(col);
+        }
+    }
+}
