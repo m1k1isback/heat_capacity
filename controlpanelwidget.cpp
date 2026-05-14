@@ -15,7 +15,7 @@ ControlPanelWidget::ControlPanelWidget(QWidget* parent)
     : QWidget(parent)
 {
     setupUI();
-    m_engine = new PhysicsEngine(this);
+    m_engine = new PhysicsEngine(this); // создали движок
     setupConnections();
 }
 
@@ -34,8 +34,8 @@ void ControlPanelWidget::setupUI()
     first_mat_combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     first_mat_spin = new QDoubleSpinBox(this);
-    first_mat_spin->setRange(0.1, 10000.0);
-    first_mat_spin->setValue(100.0);
+    first_mat_spin->setRange(300, 10000.0);
+    first_mat_spin->setValue(300.0);
     first_mat_spin->setDecimals(2);
     first_mat_spin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     first_mat_spin->setFixedWidth(120);
@@ -59,7 +59,7 @@ void ControlPanelWidget::setupUI()
         first_mat_combo->addItem(mat.name());
     }
 
-    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    // Если выбирается материал, то обновляем нижестоящие лейблы с температурой Дебая и плотностью
     connect(first_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
             this, [this](const QString& text) {
                 if (text == tr("Выберите материал")) {
@@ -76,8 +76,8 @@ void ControlPanelWidget::setupUI()
     second_mat_combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     second_mat_spin = new QDoubleSpinBox(this);
-    second_mat_spin->setRange(0.1, 10000.0);
-    second_mat_spin->setValue(100.0);
+    second_mat_spin->setRange(300, 10000.0);
+    second_mat_spin->setValue(300.0);
     second_mat_spin->setDecimals(2);
     second_mat_spin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     second_mat_spin->setFixedWidth(120);
@@ -102,7 +102,7 @@ void ControlPanelWidget::setupUI()
         second_mat_combo->addItem(mat.name());
     }
 
-    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    // Если выбирается материал, то обновляем нижестоящие лейблы с температурой Дебая и плотностью
     connect(second_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
             this, [this](const QString& text) {
                 if (text == tr("Выберите материал")) {
@@ -119,8 +119,8 @@ void ControlPanelWidget::setupUI()
     third_mat_combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     third_mat_spin = new QDoubleSpinBox(this);
-    third_mat_spin->setRange(0.1, 10000.0);
-    third_mat_spin->setValue(100.0);
+    third_mat_spin->setRange(300, 10000.0);
+    third_mat_spin->setValue(300.0);
     third_mat_spin->setDecimals(2);
     third_mat_spin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     third_mat_spin->setFixedWidth(120);
@@ -144,7 +144,7 @@ void ControlPanelWidget::setupUI()
         third_mat_combo->addItem(mat.name());
     }
 
-    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    // Если выбирается материал, то обновляем нижестоящие лейблы с температурой Дебая и плотностью
     connect(third_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
             this, [this](const QString& text) {
                 if (text == tr("Выберите материал")) {
@@ -161,8 +161,8 @@ void ControlPanelWidget::setupUI()
     fourth_mat_combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     fourth_mat_spin = new QDoubleSpinBox(this);
-    fourth_mat_spin->setRange(0.1, 10000.0);
-    fourth_mat_spin->setValue(100.0);
+    fourth_mat_spin->setRange(300, 10000.0);
+    fourth_mat_spin->setValue(300.0);
     fourth_mat_spin->setDecimals(2);
     fourth_mat_spin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     fourth_mat_spin->setFixedWidth(120);
@@ -187,7 +187,7 @@ void ControlPanelWidget::setupUI()
         fourth_mat_combo->addItem(mat.name());
     }
 
-    // 4. Подключаем сигнал (лямбда захватывает индекс 0)
+    // Если выбирается материал, то обновляем нижестоящие лейблы с температурой Дебая и плотностью
     connect(fourth_mat_combo, QOverload<const QString&>::of(&QComboBox::currentTextChanged),
             this, [this](const QString& text) {
                 if (text == tr("Выберите материал")) {
@@ -210,7 +210,6 @@ void ControlPanelWidget::setupUI()
     T0->setSingleStep(1.0);
     T0->setDecimals(1);
     T0->setValue(20.0);
-    // Фиксируем ширину, чтобы спинбокс не растягивался на всю панель
     T0->setFixedWidth(100);
 
     // Добавляем в layout: [Метка] [Поле]
@@ -220,7 +219,7 @@ void ControlPanelWidget::setupUI()
     humidity->setRange(0, 100);
     humidity->setSingleStep(5);
     humidity->setValue(70);
-    humidity->setFixedWidth(100); // Фиксируем ширину
+    humidity->setFixedWidth(100);
 
     envLayout->addRow(tr("Влажность, %:"), humidity);
 
@@ -281,46 +280,52 @@ void ControlPanelWidget::setupUI()
 
     setMinimumWidth(280);
 
+    for(int i = 0; i < 4; ++i) {
+        m_checkboxStates[i] = false;  // Все выключены по умолчанию
+    }
+
 }
 
 void ControlPanelWidget::setupConnections()
 {
     // Подключаем кнопки к методам движка
-    connect(nagrev, &QPushButton::clicked, this, &ControlPanelWidget::onStartHeatingClicked);
+    connect(nagrev, &QPushButton::clicked,                        // Нажатие кнопки нагрев, запускает метод для старта нагрева
+            this, &ControlPanelWidget::onStartHeatingClicked);
 
-    connect(termostat, &QPushButton::clicked,
+    connect(termostat, &QPushButton::clicked,                    // Нажатие кнопки термостатирование, запускает метод для старта термостатирования
             m_engine, &PhysicsEngine::startThermostatting);
 
-    connect(write_point, &QPushButton::clicked,
+    connect(write_point, &QPushButton::clicked,                 // Нажатие кнопки запись точки, запускает метод для записи точки в таблицу
             m_engine, &PhysicsEngine::recordPoint);
 
-    connect(reset_btn, &QPushButton::clicked,
+    connect(reset_btn, &QPushButton::clicked,                   // Нажатие кнопки сброс, запускает метод для сброса всех параметров и очистке сцены
             m_engine, &PhysicsEngine::reset);
 
-    connect(m_engine, &PhysicsEngine::stateChanged,
-            this, &ControlPanelWidget::onStateChanged);
-
-    connect(m_engine, &PhysicsEngine::timeUpdated,
-            this, &ControlPanelWidget::onTimeUpdated);
-
-    // 2. Счетчик точек
-    connect(m_engine, &PhysicsEngine::pointsCountUpdated,
-            this, &ControlPanelWidget::onPointsCountUpdated);
-
-    connect(export_btn, &QPushButton::clicked,
+    connect(export_btn, &QPushButton::clicked,                  // Нажатие кнопки экспорт, запускает метод для экспорта данных
             this, &ControlPanelWidget::exportRequested);
 
-    connect(m_engine, &PhysicsEngine::coolingTimeUpdated,
+    connect(m_engine, &PhysicsEngine::stateChanged,             // Изменение фазы отсылает информацию в лейбл в панели СТАТУС
+            this, &ControlPanelWidget::onStateChanged);
+
+    connect(m_engine, &PhysicsEngine::timeUpdated,              // Изменение лэйбла с таймером работы в панели СТАТУС
+            this, &ControlPanelWidget::onTimeUpdated);
+
+    connect(m_engine, &PhysicsEngine::coolingTimeUpdated,       // Изменение лэйбла с таймером фазы остывания в панели СТАТУС
             this, &ControlPanelWidget::onCoolingTimeUpdated);
+
+    connect(m_engine, &PhysicsEngine::pointsCountUpdated,       // Счетчик точек в таблице в панели СТАТУС
+            this, &ControlPanelWidget::onPointsCountUpdated);
+
 }
 
+// В зависимости от выбранного материала меняются лейблы с температурой Дебая и плотностью
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
 {
-    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
+    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) { // проверка на некорректный индекс
         return;
     }
 
-    // 2. Ищем материал в реестре по точному совпадению имени.
+    // Ищем материал в реестре по точному совпадению имени.
     auto materialOpt = Material::findByName(materialName);
     if (!materialOpt.has_value()) {
         return;
@@ -333,39 +338,56 @@ void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& mater
         return;
     }
 
-    // Формируем строку.
+    // Формируем строку  в лейблах с температурой Дебая и плотностью
     QString infoText = QString("Θ=%1 К, ρ=%2 г/см³")
                            .arg(mat.debyeTemperature(), 0, 'f', 1)
                            .arg(mat.densityGcm3(), 0, 'f', 2);
-
     label->setText(infoText);
+
+    emit sampleActivationRequested(sampleIndex, true);
 }
 
+// Очищаются лейблы с температурой Дебая и плотностью
 void ControlPanelWidget::clearSampleLabel(int sampleIndex)
 {
-    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) {
+    if (sampleIndex < 0 || sampleIndex >= m_sampleLabels.size()) { // проверка на некорректный индекс
         return;
     }
 
-    QLabel* label = m_sampleLabels[sampleIndex];
+    QLabel* label = m_sampleLabels[sampleIndex]; // Очищение лейблов
     if (label) {
         label->setText("Θ=___ К, ρ=___ г/см³");
     }
+
+    emit sampleActivationRequested(sampleIndex, false);
 }
 
+// Сборка готового массива со всеми необходимыми данными для передачи данных в движок
 QVector<Sample> ControlPanelWidget::gatherSamples() const
 {
     QVector<Sample> samples(4);
 
-    if(first_mat_combo->currentText() != "Выберите материал"){
-        QString material = first_mat_combo->currentText();
-        auto matOpt = Material::findByName(material);
-        if(matOpt.has_value()){
-            double mass = first_mat_spin->value();
-            samples[0] = Sample(0, matOpt.value(), mass);
-            samples[0].isActive = true;
+    if(first_mat_combo->currentText() != "Выберите материал"){   // 1. Проверка выбора
+        QString material = first_mat_combo->currentText();       // 2. Получение имени
+        auto matOpt = Material::findByName(material);            // 3. Поиск в реестре
+        if(matOpt.has_value()){                                  // 4. Валидация нахождения
+            double mass = first_mat_spin->value();               // 5. Чтение массы
+            samples[0] = Sample(0, matOpt.value(), mass);        // 6. Создание объекта
+            if(m_checkboxStates[0])
+                samples[0].isActive = true;                         // 7. Активация флага
         }
     }
+
+/*
+     * // Пример возвращаемого вектора, если выбраны образцы 1 и 3:
+[
+  Sample{id=0, material=Медь, mass=700г, isActive=true},   // ✅ Активен
+  Sample{id=1, material=пусто, mass=0, isActive=false},    // ❌ Неактивен
+  Sample{id=2, material=Алюминий, mass=300г, isActive=true}, // ✅ Активен
+  Sample{id=3, material=пусто, mass=0, isActive=false}     // ❌ Неактивен
+]
+
+*/
 
     if(second_mat_combo->currentText() != "Выберите материал"){
         QString material = second_mat_combo->currentText();
@@ -373,7 +395,8 @@ QVector<Sample> ControlPanelWidget::gatherSamples() const
         if(matOpt.has_value()){
             double mass = second_mat_spin->value();
             samples[1] = Sample(1, matOpt.value(), mass);
-            samples[1].isActive = true;
+            if(m_checkboxStates[1])
+                samples[1].isActive = true;
         }
     }
 
@@ -383,7 +406,8 @@ QVector<Sample> ControlPanelWidget::gatherSamples() const
         if(matOpt.has_value()){
             double mass = third_mat_spin->value();
             samples[2] = Sample(2, matOpt.value(), mass);
-            samples[2].isActive = true;
+            if(m_checkboxStates[2])
+                samples[2].isActive = true;
         }
     }
 
@@ -393,19 +417,25 @@ QVector<Sample> ControlPanelWidget::gatherSamples() const
         if(matOpt.has_value()){
             double mass = fourth_mat_spin->value();
             samples[3] = Sample(3, matOpt.value(), mass);
-            samples[3].isActive = true;
+            if(m_checkboxStates[3])
+                samples[3].isActive = true;
         }
     }
 
     return samples;
 }
 
+void ControlPanelWidget::onSampleCheckboxChanged(int index, bool checked){
+    m_checkboxStates[index] = checked;
+}
+
 void ControlPanelWidget::onStartHeatingClicked()
 {
+    // Проверка на то, что выбран хотя бы один материал
     bool Named = false;
     for(int i = 0; i < 4; i++){
         QString name = m_sampleCombos[i]->currentText();
-        if(name != "Выберите материал"){
+        if(name != "Выберите материал" && m_checkboxStates[i] == true){
             Named = true;
             break;
         }
@@ -415,6 +445,7 @@ void ControlPanelWidget::onStartHeatingClicked()
         return;
     }
 
+    // Собираем все данные
     QVector<Sample> samples = gatherSamples();
     QVector<bool> actives;
     for(int i = 0; i < 4; i++){
@@ -430,9 +461,9 @@ void ControlPanelWidget::onStartHeatingClicked()
 
 }
 
+//      Меняем текст фазы
 void ControlPanelWidget::onStateChanged(ExperimentState state)
 {
-    // В зависимости от значения enum, меняем текст метки
     switch (state) {
     case ExperimentState::Idle:
         phase->setText("Ожидание");
@@ -453,6 +484,7 @@ void ControlPanelWidget::onStateChanged(ExperimentState state)
     }
 }
 
+// Обновляем время работы
 void ControlPanelWidget::onTimeUpdated(int seconds)
 {
     int minutes = seconds / 60;
@@ -466,21 +498,23 @@ void ControlPanelWidget::onTimeUpdated(int seconds)
     time->setText(timeString);
 }
 
+// Обновление счетчика записанных точек
 void ControlPanelWidget::onPointsCountUpdated(int count)
 {
     pointsLabel->setText(QString::number(count));
 }
 
+// Обновляем время фазы охлаждения
 void ControlPanelWidget::onCoolingTimeUpdated(double timeSec)
 {
     int totalSeconds = static_cast<int>(timeSec);  // Отбрасываем доли
     int minutes = totalSeconds / 60;
     int seconds = totalSeconds % 60;
 
-    // Форматируем как 00:00 с ведущими нулями
+    // Форматирование 00:00
     QString timeString = QString("%1:%2")
                              .arg(minutes, 2, 10, QChar('0'))
                              .arg(seconds, 2, 10, QChar('0'));
 
-    m_coolingTimeLabel->setText(timeString);  // ✅ Только время, без префикса!
+    m_coolingTimeLabel->setText(timeString);
 }

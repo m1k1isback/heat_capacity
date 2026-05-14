@@ -28,10 +28,12 @@ DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
 
 }
 
+// Установка значения на дисплеях
 void DigitalDisplay::setValue(double value)
 {
     valueText->setPlainText(QString("%1 °C").arg(value, 5, 'f', 2));
 }
+
 // Замена префикса в дисплее
 void DigitalDisplay::setPrefix(const QString &prefix)
 {

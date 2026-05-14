@@ -45,6 +45,9 @@ private slots:
     void onExportRequested();
 
     void onSamplesStatusUpdated(const QVector<bool>& statuses);
+
+    void onTableReset();
+    void onTableHeaderChanged(int sampleIndex, bool isDifferential);
 };
 
 #endif // EXPERIMENTWINDOW_H

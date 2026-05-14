@@ -36,10 +36,16 @@ private:
     double m_T0;
     double m_lastSampleTemps[4];  // T1, T2, T3, T4
     double m_lastT0;
-private slots:
+public slots:
     void onDifferentialModeToggled(int sampleIndex, bool enabled);
     void updateDisplayForSample(int sampleIndex, double T_sample, double T0);
-
+    void setSampleActive(int index, bool active);
+signals:
+    void sampleVisibilityChanged(int index, bool visible);
+    void sampleActiveChanged(int index, bool active);
+    void sampleIsChanged(int index, bool active);
+    void differentialModeChanged(int index, bool enabled);
+    void tableHeaderChanged(int index, bool isDifferential);
 };
 
 #endif // CALORIMETERSCENE_H

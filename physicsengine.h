@@ -17,6 +17,9 @@ public:
     void startThermostatting();
     void recordPoint();
     void reset();
+public slots:
+    void setSampleActive(int index, bool active);
+    void setDifferentialMode(int index, bool enabled);
 signals:
     void temperaturesUpdated(QVector<double> newTemps, double elapsedSec);
     void stateChanged(ExperimentState newState);
@@ -25,6 +28,7 @@ signals:
 
     void timeUpdated(int totalSeconds);       // Для обновления таймера
     void pointsCountUpdated(int count);
+    void tableReset();
 private slots:
     void onTimerTick();
 private:
@@ -36,6 +40,7 @@ private:
     QVector<Sample> m_samples; //копия массива образцов с их текущими температурами.
     int m_pointCount; // сколько записанных точек
     double m_coolingTimeSec;
+    bool m_isDifferentialMode[4];
 
     static constexpr double K_CONST = 5.20;  // Дж/(мин·К)
     static constexpr double C_K = 210.0;     // Дж/К

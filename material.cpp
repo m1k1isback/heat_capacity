@@ -6,11 +6,11 @@ Material::Material(const QString& name,
                    double molarMassKgMol,
                    double refSpecificHeatJKgK,
                    double densityGcm3)
-    : m_name(name)
-    , m_debyeTemperature(debyeTempK)
-    , m_molarMass(molarMassKgMol)
-    , m_refSpecificHeat(refSpecificHeatJKgK)
-    , m_density(densityGcm3)
+    : m_name(name)                              // Название материала
+    , m_debyeTemperature(debyeTempK)            // Температура Дебая
+    , m_molarMass(molarMassKgMol)               // Молярная масса
+    , m_refSpecificHeat(refSpecificHeatJKgK)    // Удельная теплоёмкость
+    , m_density(densityGcm3)                    // Плотность
 {
 }
 
@@ -37,7 +37,7 @@ Material Material::copper()
                     343.0,
                     0.063546,
                     385.0,
-                    8.96);  // ← ДОБАВЬТЕ ЭТОТ ПАРАМЕТР (плотность)
+                    8.96);
 }
 
 Material Material::aluminum()
@@ -47,7 +47,7 @@ Material Material::aluminum()
                     428.0,
                     0.026982,
                     900.0,
-                    2.70);  // ← ДОБАВЬТЕ ЭТОТ ПАРАМЕТР
+                    2.70);
 }
 
 Material Material::iron()
@@ -57,7 +57,7 @@ Material Material::iron()
                     420.0,
                     0.055845,
                     450.0,
-                    7.87);  // ← ДОБАВЬТЕ ЭТОТ ПАРАМЕТР
+                    7.87);
 }
 
 Material Material::lead()

@@ -16,8 +16,6 @@ CalorimeterScene::CalorimeterScene(QObject *parent)
     }
 
     buildLayout();
-    // === НОВОЕ: Принудительно обновляем дисплеи при старте ===
-    // Это покажет 20.00 сразу, до нажатия кнопок
     updateTemperatures(20.0, 20.0, 20.0, 20.0, 20.0);
 }
 
@@ -99,6 +97,10 @@ void CalorimeterScene::buildLayout()
     for(int i = 0; i < 4; i++){
         QCheckBox *cb = new QCheckBox();
         cb->setText("Обр. " + QString::number(i + 1));
+
+        cb->setChecked(false);
+        cb->setEnabled(false);
+
         checkBoxes[i] = cb;
         cb->setChecked(true);
         QGraphicsProxyWidget* proxy = new QGraphicsProxyWidget();
@@ -112,6 +114,11 @@ void CalorimeterScene::buildLayout()
         connect(checkBoxes[i], &QCheckBox::toggled, this, [this, i]() {
             this->checkSample(i, checkBoxes[i]->isChecked());
         });
+    }
+
+    for(int i = 0; i < 4; i++){
+        isActive[i] = false;
+        m_sampleCrosses[i]->setVisible(true);  // Показать красный крест сразу
     }
 
     for(int i = 0; i < 4; i++) {
@@ -158,13 +165,6 @@ void CalorimeterScene::buildLayout()
     displays[3] = new DigitalDisplay("4");
     displays[3]->setPos(580+250, 480);
     addItem(displays[3]);
-
-    //---------------------------------------------
-    /*// T0 (Среда) - Снизу по центру
-    displays[4] = new DigitalDisplay("T0 (Среда)");
-    displays[4]->setPos(250, 520);
-    addItem(displays[4]);
-    //------------------------------------------*/
 
     QPointF displayCenters[] = {
         QPointF(220+250+10, 280),
@@ -355,6 +355,7 @@ void CalorimeterScene::buildLayout()
     addItem(crossSectionGroup);
 }
 
+// Обновление и расчет температур для двух режимов: дифференциальный и обычный
 void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, double t4, double t0)
 {
     m_lastSampleTemps[0] = t1;
@@ -390,18 +391,28 @@ void CalorimeterScene::updateTemperatures(double t1, double t2, double t3, doubl
     }
 }
 
-void CalorimeterScene::checkSample(int index, bool  checked){
+// Связь чекбокса образца с показом столбцов
+void CalorimeterScene::checkSample(int index, bool checked){
     if(index < 0 || index >= 4) return;
     isActive[index] = checked;
     m_sampleCrosses[index]->setVisible(!checked);
+
+    emit sampleVisibilityChanged(index, checked);
+    emit sampleActiveChanged(index, checked);
+    emit sampleIsChanged(index, checked);
 }
 
+// Если произошло нажатие на смену режима
 void CalorimeterScene::onDifferentialModeToggled(int sampleIndex, bool enabled){
     m_isDifferentialMode[sampleIndex] = enabled;
     if (sampleIndex >= 0 && sampleIndex < 4) {
-        updateDisplayForSample(sampleIndex, m_lastSampleTemps[sampleIndex], m_lastT0);
+        updateDisplayForSample(sampleIndex, m_lastSampleTemps[sampleIndex], m_lastT0); // Вызывается метод где происходит перерасчет для одного образца
     }
+    emit differentialModeChanged(sampleIndex, enabled);
+    emit tableHeaderChanged(sampleIndex, enabled);
 }
+
+ // Метод для расчета температуры для одного образца а не всех разом
 void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, double T0){
     if (sampleIndex < 0 || sampleIndex >= 4) return;
     if (!isActive[sampleIndex]) {
@@ -421,14 +432,13 @@ void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, 
 }
 }
 
-// === Сеттер для температуры среды ===
+// Сеттер температуры среды
 void CalorimeterScene::setEnvironmentTemperature(double t0)
 {
     m_lastT0 = t0;
-    // Если у тебя есть дисплей для T0 (displays[4]), раскомментируй:
-    // if (displays[4]) displays[4]->setValue(t0);
 }
 
+// Принятие от движка ново рассчитанных температур и передача их в updateTemperatures
 void CalorimeterScene::onPhysicsTemperaturesUpdated(const QVector<double>& temps, int elapsedSec)
 {
     Q_UNUSED(elapsedSec);
@@ -436,4 +446,17 @@ void CalorimeterScene::onPhysicsTemperaturesUpdated(const QVector<double>& temps
     if (temps.size() >= 4) {
         updateTemperatures(temps[0], temps[1], temps[2], temps[3], m_lastT0);
     }
+}
+
+// ?
+void CalorimeterScene::setSampleActive(int index, bool active)
+{
+    if (index < 0 || index >= 4) return;
+
+    // Блокируем сигнал, чтобы не вызвать рекурсию при программном изменении
+    QSignalBlocker blocker(checkBoxes[index]);
+
+    checkBoxes[index]->setChecked(active);
+    checkBoxes[index]->setEnabled(active);  // Разрешаем пользователю снять галочку, если нужно
+    checkSample(index, active);             // Вызываем существующую логику (крест, таблица, физика)
 }

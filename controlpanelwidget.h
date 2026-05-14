@@ -27,6 +27,8 @@ signals:
 
     void samplesStatusUpdated(const QVector<bool>& statuses);
 
+    void sampleActivationRequested(int sampleIndex, bool active);
+
 private:
     // --- Контейнеры (группы) ---
     QGroupBox* m_sampleGroup;
@@ -81,6 +83,8 @@ private:
     QVector<QLabel*> m_sampleLabels;
 
     PhysicsEngine* m_engine;
+
+    bool m_checkboxStates[4];
 private slots:
     void setupConnections();
 
@@ -96,5 +100,6 @@ private slots:
     void onPointsCountUpdated(int count);
 
     void onCoolingTimeUpdated(double timeSec);
-
+public slots:
+    void onSampleCheckboxChanged(int, bool);
 };

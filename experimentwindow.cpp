@@ -45,21 +45,22 @@ void ExperimentWindow::fitSceneToView()
 
 void ExperimentWindow::setupUI()
 {
-    // === 1. Создаём центральный виджет и ОСНОВНОЙ ГОРИЗОНТАЛЬНЫЙ layout ===
+    // Создание основного виджета на экране лабораторной работы
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
 
+    // Основной лэйаут
     QHBoxLayout *mainHLayout = new QHBoxLayout(central);
     mainHLayout->setContentsMargins(0, 0, 0, 0);
     mainHLayout->setSpacing(0);
 
-    // === 2. ЛЕВАЯ ЧАСТЬ ОКНА (сцена + таблица) ===
+    // ЛЕВАЯ ЧАСТЬ ЭКРАНА
     QWidget *leftContainer = new QWidget(this);
     QVBoxLayout *leftLayout = new QVBoxLayout(leftContainer);
     leftLayout->setContentsMargins(0, 0, 0, 0);
     leftLayout->setSpacing(0);
 
-    // 2.1: Сцена
+    // УСТАНОВКА
     scene = new CalorimeterScene(this);
     graphicsView = new QGraphicsView(scene, this);
     graphicsView->setFrameStyle(QFrame::NoFrame);
@@ -77,7 +78,7 @@ void ExperimentWindow::setupUI()
 
     leftLayout->addWidget(graphicsView, 1);  // 1 = занимает всё доступное место
 
-    // 2.2: Таблица (внизу слева)
+    // ТАБЛИЦА ДАННЫХ
     QGroupBox *tableGroup = new QGroupBox("Протокол измерений", this);
     QVBoxLayout *tableLayout = new QVBoxLayout(tableGroup);
     tableLayout->setContentsMargins(5, 5, 5, 5);
@@ -97,7 +98,7 @@ void ExperimentWindow::setupUI()
     // Добавляем левую часть в основной layout
     mainHLayout->addWidget(leftContainer, 4);  // 4 = 80% ширины окна
 
-    // === 3. ПРАВАЯ ЧАСТЬ ОКНА (панель управления на всю высоту) ===
+    // ПАНЕЛЬ УПРАВЛЕНИЯ
     auto* controlPanel = new ControlPanelWidget(this);
     controlPanel->setMinimumWidth(350);
     controlPanel->setMaximumWidth(450);
@@ -105,28 +106,43 @@ void ExperimentWindow::setupUI()
     mainHLayout->addWidget(controlPanel, 1);  // 1 = 20% ширины окна
 
 
-    // 1. Подключаем сигнал температур от движка к сцене
-    connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,
+    // КОННЕКТЫ БЭКЭНДА И ФРОНТЕНДА
+
+    connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,             // Обновление температур на дисплеях
             scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
 
-    connect(controlPanel, &ControlPanelWidget::environmentTemperatureSet,
+    connect(controlPanel, &ControlPanelWidget::environmentTemperatureSet,               // Установка температуры среды
             scene, &CalorimeterScene::setEnvironmentTemperature);
 
-    // 1. Подключаем сигнал температур
-    auto conn = connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,
-                        scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
-
-    connect(controlPanel->getEngine(), &PhysicsEngine::pointRecorded,
+    connect(controlPanel->getEngine(), &PhysicsEngine::pointRecorded,                   // Запись точки
             this, &ExperimentWindow::onPointRecorded);
 
-    connect(controlPanel, &ControlPanelWidget::exportRequested,
+    connect(controlPanel, &ControlPanelWidget::exportRequested,                         // Экспорт файла при нажатии кнопки
             this, &ExperimentWindow::onExportRequested);
 
-    connect(controlPanel, &ControlPanelWidget::samplesStatusUpdated,
+    connect(controlPanel, &ControlPanelWidget::samplesStatusUpdated,                    // Видимость столбцов в таблице данных
             this, &ExperimentWindow::onSamplesStatusUpdated);
 
+    connect(controlPanel, &ControlPanelWidget::sampleActivationRequested,               // Активизация образца на сцене
+            scene, &CalorimeterScene::setSampleActive);
+
+    connect(scene, &CalorimeterScene::sampleActiveChanged,                              // Связываем состояние чекбокса с движком
+            controlPanel->getEngine(), &PhysicsEngine::setSampleActive);
+
+    connect(scene, &CalorimeterScene::sampleIsChanged,                                  // Связываем состояние чекбокса с панелью
+            controlPanel, &ControlPanelWidget::onSampleCheckboxChanged);
+
+    connect(controlPanel->getEngine(), &PhysicsEngine::tableReset,                      // Очищение таблицы
+            this, &ExperimentWindow::onTableReset);
+
+    connect(scene, &CalorimeterScene::differentialModeChanged,                          // Дифференциальный режим
+            controlPanel->getEngine(), &PhysicsEngine::setDifferentialMode);
+
+    connect(scene, &CalorimeterScene::tableHeaderChanged,                               // Связь дифференциального режима с колонками таблицы
+            this, &ExperimentWindow::onTableHeaderChanged);
 }
 
+// Запись точки в таблицу
 void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps){
     int newRow = tableWidget->rowCount();
     tableWidget->insertRow(newRow);
@@ -134,55 +150,88 @@ void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double
     tableWidget->setItem(newRow, 0, new QTableWidgetItem(QString::number(id)));
     tableWidget->setItem(newRow, 1, new QTableWidgetItem(QString::number(time, 'f', 2)));
 
-    // 4. Запиши T1, T2, T3, T4 (колонки 2, 3, 4, 5)
+    // Колонки в таблице
     for(int i = 0; i < 4; i++){
         int column = i + 2;
         tableWidget->setItem(newRow, column, new QTableWidgetItem(QString::number(temps[i], 'f', 3)));
     }
-    qDebug() << "Записана точка #" << id << "в строку" << newRow;
+}
+
+void ExperimentWindow::onTableHeaderChanged(int sampleIndex, bool isDifferential)
+{
+    // Столбцы с температурами начинаются с индекса 1 (0-й — время)
+    int column = sampleIndex + 2;
+    if (column < 2 || column >= tableWidget->columnCount()) {
+        return; // Защита от некорректного индекса
+    }
+
+    // Формируем новый текст заголовка
+    QString newHeader = isDifferential
+                            ? QString("T%1-T0 (°C)").arg(sampleIndex + 1)
+                            : QString("T%1 (°C)").arg(sampleIndex + 1);
+
+    // Получаем существующий элемент заголовка или создаём новый
+    QTableWidgetItem* headerItem = tableWidget->horizontalHeaderItem(column);
+    if (!headerItem) {
+        headerItem = new QTableWidgetItem();
+        tableWidget->setHorizontalHeaderItem(column, headerItem);
+    }
+
+    // Применяем изменения
+    headerItem->setText(newHeader);
+}
+
+void ExperimentWindow::onTableReset() {
+    tableWidget->setRowCount(0);
+    for(int i = 0; i < 4; ++i) {
+        int col = i + 2;
+        auto* item = tableWidget->horizontalHeaderItem(col);
+        if(item) item->setText(QString("T%1 (°C)").arg(i + 1));
+    }
 }
 
 void ExperimentWindow::onExportRequested(){
+    // Открытие диалогового окна
     QString fileName = QFileDialog::getSaveFileName(this, "Экспорт в Excel", "", "CSV Files (*.csv);;Text Files (*.txt)" );
-    if (fileName.isEmpty()) return;
+    if (fileName.isEmpty()) return; // если пользователь отменил сохранение
 
+    // Сохраняем путь
     QFile file(fileName);
-    if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){ // WriteOnly - только запись
         QMessageBox::warning(this, "Ошибка", "Не удалось сохранить файл!");
         return;
     }
 
+    // Настраиваем котировку
     QTextStream stream(&file);
-      // stream.setCodec("UTF-8"); // Можно включить, если русские буквы будут кракозябрами
-    //stream.setCodec("UTF-8");
     stream.setGenerateByteOrderMark(true);
 
-    // === Цикл ЗАГОЛОВКОВ ===
+    //  Цикл ЗАГОЛОВКОВ
     for (int col = 0; col < tableWidget->columnCount(); ++col) {
-        if (tableWidget->isColumnHidden(col)) continue;
+        if (tableWidget->isColumnHidden(col)) continue; // пропускаем скрытые столбцы
 
-        QTableWidgetItem *headerItem = tableWidget->horizontalHeaderItem(col);
-        stream << (headerItem ? headerItem->text() : "") << ";";
+        QTableWidgetItem *headerItem = tableWidget->horizontalHeaderItem(col); // Добавляем заголовок
+        stream << (headerItem ? headerItem->text() : "") << ";"; // Разделитель ";"
     }
-    stream << "\n";  // ← ЭТОТ ПЕРЕНОС СТРОКИ ОБЯЗАТЕЛЕН!
+    stream << "\n";  // перенос строки
 
-    // === Цикл ДАННЫХ ===
+    //  Цикл ДАННЫХ
     for (int row = 0; row < tableWidget->rowCount(); ++row) {
         for (int col = 0; col < tableWidget->columnCount(); ++col) {
-            if (tableWidget->isColumnHidden(col)) continue;
+            if (tableWidget->isColumnHidden(col)) continue; // пропускаем скрытые столбцы
 
             QTableWidgetItem* item = tableWidget->item(row, col);
             if (item) {
                 QString text = item->text();
-                if (col >= 1) {
-                    text.replace('.', ',');
+                if (col >= 1) { // пропускаем столбец времени
+                    text.replace('.', ','); // замена точки на запятую
                 }
                 stream << text << ";";
             } else {
                 stream << ";";
             }
         }
-        stream << "\n";  // ← Перенос после каждой строки данных
+        stream << "\n";  //  Перенос после каждой строки данных
     }
 
     file.close();
@@ -191,13 +240,13 @@ void ExperimentWindow::onExportRequested(){
 
 void ExperimentWindow::onSamplesStatusUpdated(const QVector<bool>& statuses){
     for (int i = 0; i < statuses.size(); ++i) {
-        int col = i + 2; // Сдвиг на 2, т.к. первые два столбца — № и Время
+        int col = i + 2; // Сдвиг на 2, т.к. первые два столбца — время и номер
 
         if (statuses[i]) {
-            // Образец активен → показываем столбец
+            // Образец активен - показываем столбец
             tableWidget->showColumn(col);
         } else {
-            // Образец не выбран → скрываем столбец
+            // Образец не выбран - скрываем столбец
             tableWidget->hideColumn(col);
         }
     }
