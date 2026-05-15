@@ -34,6 +34,7 @@ private:
     QHBoxLayout *buttonLayout;
     QPushButton *startButton;
     QPushButton *methodologyButton;
+    QPushButton *guideBtn;
 
     MethodologyDialog *methodologyDialog;
 };

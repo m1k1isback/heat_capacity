@@ -140,6 +140,9 @@ void ExperimentWindow::setupUI()
 
     connect(scene, &CalorimeterScene::tableHeaderChanged,                               // Связь дифференциального режима с колонками таблицы
             this, &ExperimentWindow::onTableHeaderChanged);
+
+    connect(controlPanel, &ControlPanelWidget::backToMenuRequested,                     // Эмит закрыть окно эксперимента и вернуться в меню
+            this, &ExperimentWindow::returnToMainMenuRequested);
 }
 
 // Запись точки в таблицу

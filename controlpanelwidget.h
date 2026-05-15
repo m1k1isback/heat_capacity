@@ -29,6 +29,8 @@ signals:
 
     void sampleActivationRequested(int sampleIndex, bool active);
 
+    void backToMenuRequested();
+
 private:
     // --- Контейнеры (группы) ---
     QGroupBox* m_sampleGroup;
@@ -65,6 +67,7 @@ private:
     QPushButton* stop;
     QPushButton* export_btn;
     QPushButton* reset_btn;
+    QPushButton* back_btn;
 
     // --- Статус ---
     QLabel* phase;

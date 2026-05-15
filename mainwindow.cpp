@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "methodologydialog.h"
 #include "experimentwindow.h"
+#include "guidedialog.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <QScreen>
@@ -44,6 +45,7 @@ void MainWindow::setupUI()
 
     mainLayout->addStretch(3);
 
+    // === 1. СНАЧАЛА кнопки "Приступить" и "Методичка" ===
     buttonLayout = new QHBoxLayout();
     buttonLayout->setSpacing(30);
 
@@ -70,7 +72,30 @@ void MainWindow::setupUI()
     connect(methodologyButton, &QPushButton::clicked, this, &MainWindow::showMethodology);
     buttonLayout->addWidget(methodologyButton);
 
-    mainLayout->addLayout(buttonLayout);
+    mainLayout->addLayout(buttonLayout);  // ← Добавляем ряд СНАЧАЛА
+    mainLayout->addSpacing(10);           // Небольшой отступ
+
+    // === 2. ПОТОМ кнопка "Практическое руководство" ===
+    guideBtn = new QPushButton("Практическое руководство к программе", this);
+    guideBtn->setFont(buttonFont);
+    guideBtn->setStyleSheet(
+        "QPushButton { "
+        "    background-color: #95a5a6; "
+        "    color: white; "
+        "    border: none; "
+        "    border-radius: 8px; "
+        "    padding: 10px 20px; "
+        "} "
+        "QPushButton:hover { background-color: #7f8c8d; } "
+        "QPushButton:pressed { background-color: #6c7a7b; } "
+        );
+
+    connect(guideBtn, &QPushButton::clicked, this, [this]() {
+        GuideDialog dlg(this);
+        dlg.exec();
+    });
+
+    mainLayout->addWidget(guideBtn, 0, Qt::AlignCenter);
     mainLayout->addStretch(1);
 
     setWindowTitle("Виртуальная лабораторная работа");
@@ -84,6 +109,12 @@ void MainWindow::startExperiment()
 {
     ExperimentWindow *expWindow = new ExperimentWindow(this);
     expWindow->setAttribute(Qt::WA_DeleteOnClose);
+
+    connect(expWindow, &ExperimentWindow::returnToMainMenuRequested, this, [this, expWindow]() {
+        expWindow->close(); // WA_DeleteOnClose корректно удалит объект
+        this->show();       // Возвращаем главное меню
+    });
+
     this->hide();
     expWindow->show();
 }

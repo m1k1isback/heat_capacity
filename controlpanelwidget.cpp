@@ -248,12 +248,14 @@ void ControlPanelWidget::setupUI()
     write_point = new QPushButton(tr("Записать точку"), this);
     export_btn = new QPushButton(tr("Экспортировать в XLS"), this);
     reset_btn = new QPushButton(tr("Сброс"), this);
+    back_btn = new QPushButton(tr("Вернуться в главное меню"), this);
 
     manageLayout->addWidget(nagrev);
     manageLayout->addWidget(termostat);
     manageLayout->addWidget(write_point);
     manageLayout->addWidget(reset_btn);
     manageLayout->addWidget(export_btn);
+    manageLayout->addWidget(back_btn);
 
     m_mainLayout->addWidget(m_controlGroup);
 
@@ -315,6 +317,9 @@ void ControlPanelWidget::setupConnections()
 
     connect(m_engine, &PhysicsEngine::pointsCountUpdated,       // Счетчик точек в таблице в панели СТАТУС
             this, &ControlPanelWidget::onPointsCountUpdated);
+
+    connect(back_btn, &QPushButton::clicked,                    // Сигнал закрыть окно эксперимента и вернуться в главное меню
+            this, &ControlPanelWidget::backToMenuRequested);
 
 }
 

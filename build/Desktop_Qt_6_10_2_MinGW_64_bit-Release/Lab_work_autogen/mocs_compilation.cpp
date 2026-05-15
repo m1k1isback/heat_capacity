@@ -2,6 +2,7 @@
 #include "EWIEGA46WW/moc_calorimeterscene.cpp"
 #include "EWIEGA46WW/moc_controlpanelwidget.cpp"
 #include "EWIEGA46WW/moc_experimentwindow.cpp"
+#include "EWIEGA46WW/moc_guidedialog.cpp"
 #include "EWIEGA46WW/moc_mainwindow.cpp"
 #include "EWIEGA46WW/moc_methodologydialog.cpp"
 #include "EWIEGA46WW/moc_physicsengine.cpp"

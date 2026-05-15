@@ -48,6 +48,8 @@ private slots:
 
     void onTableReset();
     void onTableHeaderChanged(int sampleIndex, bool isDifferential);
+signals:
+    void returnToMainMenuRequested();
 };
 
 #endif // EXPERIMENTWINDOW_H

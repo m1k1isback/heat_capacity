@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         controlpanelwidget.h controlpanelwidget.cpp
         sample.h sample.cpp
         physicsengine.h physicsengine.cpp
+        guidedialog.h guidedialog.cpp
     )
 else()
     if(ANDROID)
