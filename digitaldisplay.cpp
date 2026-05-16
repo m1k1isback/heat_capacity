@@ -1,6 +1,7 @@
 #include "DigitalDisplay.h"
 #include <QPen>
 #include <QBrush>
+#include <QFont>
 
 DigitalDisplay::DigitalDisplay(const QString &label, QGraphicsItem *parent)
     : QGraphicsItemGroup(parent), m_label(label), m_prefix("T")

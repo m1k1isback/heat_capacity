@@ -9,6 +9,14 @@
 #include <QResizeEvent>
 #include <QTimer>
 #include <QFileDialog>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QTableWidget>
+#include <QPushButton>
+#include <QGraphicsView>
+#include <QResizeEvent>
+#include "CalorimeterScene.h"  // Полный тип нужен для создания сцены
+#include "mainwindow.h"
 
 ExperimentWindow::ExperimentWindow(MainWindow *parentWindow, QWidget *parent)
     : QMainWindow(parent), mainWindowPtr(parentWindow), rowCount(0), currentTime(0)

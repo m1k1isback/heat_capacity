@@ -1,32 +1,37 @@
-#ifndef DIGITALDISPLAY_H
-#define DIGITALDISPLAY_H
+#pragma once
 
+// Forward declarations (используются только как указатели — ускоряет компиляцию)
+class QGraphicsRectItem;
+class QGraphicsTextItem;
+
+// Необходимые заголовки (типы, используемые по значению в сигнатурах методов)
 #include <QGraphicsItemGroup>
-#include <QGraphicsRectItem>
-#include <QGraphicsTextItem>
-#include <QFont>
+#include <QString>
+#include <QColor>
 
 class DigitalDisplay : public QGraphicsItemGroup
 {
 public:
-    // label — подпись (например, "T1"), parent — родительский элемент
+    // Конструктор с explicit (защита от неявных преобразований)
     explicit DigitalDisplay(const QString &label, QGraphicsItem *parent = nullptr);
+    ~DigitalDisplay() override = default;  // Явный виртуальный деструктор
 
-    // Метод для обновления значения
+    // Публичные методы (интерфейс класса)
     void setValue(double value);
-
-    void setPrefix(const QString &prefix);    // для установки "T" или "ΔT"
+    void setPrefix(const QString &prefix);
     void setTextColor(const QColor &color);
 
 private:
-    QGraphicsRectItem *bgRect;      // Фон табло
-    QGraphicsTextItem *labelText;   // Подпись (T1, T2...)
-    QGraphicsTextItem *valueText;   // Цифры
+    // Графические элементы (инициализация = nullptr)
+    QGraphicsRectItem *bgRect = nullptr;
+    QGraphicsTextItem *labelText = nullptr;
+    QGraphicsTextItem *valueText = nullptr;
 
+    // Данные (строки и цвета)
     QString m_label;
-    QString m_prefix;      // префикс ("T" или "ΔT")
-    QColor m_textColor;    // цвет текста
-    QGraphicsTextItem* m_textItem;  // или как у тебя называется текстовый элемент
-};
+    QString m_prefix;
+    QColor m_textColor;
 
-#endif // DIGITALDISPLAY_H
+    // Текстовый элемент (инициализация = nullptr)
+    QGraphicsTextItem* m_textItem = nullptr;
+};

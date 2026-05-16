@@ -1,16 +1,18 @@
-#ifndef EXPERIMENTWINDOW_H
-#define EXPERIMENTWINDOW_H
+#pragma once
 
-#include <QMainWindow>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QTableWidget>
-#include <QPushButton>
-#include <QGraphicsView>
-#include <QResizeEvent> // Добавлено для resizeEvent
-#include "CalorimeterScene.h"
-
+// Forward declarations (используются только как указатели — ускоряет компиляцию)
 class MainWindow;
+class CalorimeterScene;
+class QGraphicsView;
+class QTableWidget;
+class QPushButton;
+class QVBoxLayout;
+class QHBoxLayout;
+class QResizeEvent;
+
+// Необходимые заголовки (базовый класс + типы по значению в сигнатурах)
+#include <QMainWindow>
+#include <QVector>
 
 class ExperimentWindow : public QMainWindow
 {
@@ -18,38 +20,39 @@ class ExperimentWindow : public QMainWindow
 
 public:
     explicit ExperimentWindow(MainWindow *parentWindow = nullptr, QWidget *parent = nullptr);
-    ~ExperimentWindow();
+    ~ExperimentWindow() override;  // Деструктор объявлен в .cpp, поэтому не = default
 
 protected:
     // Переопределяем событие изменения размера для динамического масштабирования
     void resizeEvent(QResizeEvent *event) override;
 
-private:
-    void setupUI();
-
-    MainWindow *mainWindowPtr;
-    CalorimeterScene *scene;
-    QGraphicsView *graphicsView; // Теперь это член класса
-    QTableWidget *tableWidget;
-    QPushButton *btnStart;
-    QPushButton *btnRecord;
-    QPushButton *btnStop;
-    QPushButton *btnBack;
-    void fitSceneToView();
-
-    int rowCount;
-    int currentTime;
-private slots:
-    void onPointRecorded(int id, double time, const QVector<double>& temps);
-
-    void onExportRequested();
-
-    void onSamplesStatusUpdated(const QVector<bool>& statuses);
-
-    void onTableReset();
-    void onTableHeaderChanged(int sampleIndex, bool isDifferential);
 signals:
     void returnToMainMenuRequested();
-};
 
-#endif // EXPERIMENTWINDOW_H
+public slots:
+    void onPointRecorded(int id, double time, const QVector<double>& temps);
+    void onExportRequested();
+    void onSamplesStatusUpdated(const QVector<bool>& statuses);
+    void onTableReset();
+    void onTableHeaderChanged(int sampleIndex, bool isDifferential);
+
+private:
+    void setupUI();
+    void fitSceneToView();
+
+    // Указатели на основные компоненты (инициализация в конструкторе)
+    MainWindow *mainWindowPtr = nullptr;
+    CalorimeterScene *scene = nullptr;
+    QGraphicsView *graphicsView = nullptr;
+    QTableWidget *tableWidget = nullptr;
+
+    // Кнопки управления
+    QPushButton *btnStart = nullptr;
+    QPushButton *btnRecord = nullptr;
+    QPushButton *btnStop = nullptr;
+    QPushButton *btnBack = nullptr;
+
+    // Состояние таблицы и таймера
+    int rowCount = 0;
+    int currentTime = 0;
+};

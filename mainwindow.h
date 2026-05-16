@@ -1,16 +1,17 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
-#include <QMainWindow>
-#include <QPushButton>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QMessageBox>
-#include <QApplication>
-#include <QScreen>
-
+// Forward declarations (используются только как указатели — ускоряет компиляцию)
+class QPushButton;
+class QLabel;
+class QVBoxLayout;
+class QHBoxLayout;
+class QMessageBox;
+class QApplication;
+class QScreen;
 class MethodologyDialog;
+
+// Необходимые заголовки (базовый класс + типы по значению в сигнатурах)
+#include <QMainWindow>
 
 class MainWindow : public QMainWindow
 {
@@ -18,7 +19,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     void startExperiment();
@@ -27,16 +28,18 @@ private slots:
 private:
     void setupUI();
 
-    QWidget *centralWidget;
-    QVBoxLayout *mainLayout;
-    QLabel *titleLabel;
-    QLabel *numberLabel;
-    QHBoxLayout *buttonLayout;
-    QPushButton *startButton;
-    QPushButton *methodologyButton;
-    QPushButton *guideBtn;
+    // Виджеты и компоновщики (инициализация = nullptr)
+    QWidget *centralWidget = nullptr;
+    QVBoxLayout *mainLayout = nullptr;
+    QLabel *titleLabel = nullptr;
+    QLabel *numberLabel = nullptr;
+    QHBoxLayout *buttonLayout = nullptr;
 
-    MethodologyDialog *methodologyDialog;
+    // Кнопки
+    QPushButton *startButton = nullptr;
+    QPushButton *methodologyButton = nullptr;
+    QPushButton *guideBtn = nullptr;
+
+    // Диалог методички
+    MethodologyDialog *methodologyDialog = nullptr;
 };
-
-#endif // MAINWINDOW_H
