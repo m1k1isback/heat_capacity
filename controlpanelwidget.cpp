@@ -349,7 +349,10 @@ void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& mater
                            .arg(mat.densityGcm3(), 0, 'f', 2);
     label->setText(infoText);
 
+    QString symbol = mat.symbol();
+
     emit sampleActivationRequested(sampleIndex, true);
+    emit materialSymbolChanged(sampleIndex, symbol);
 }
 
 // Очищаются лейблы с температурой Дебая и плотностью

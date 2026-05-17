@@ -35,10 +35,12 @@ public slots:
     void onSamplesStatusUpdated(const QVector<bool>& statuses);
     void onTableReset();
     void onTableHeaderChanged(int sampleIndex, bool isDifferential);
+    void onMaterialSymbolChanged(int sampleIndex, const QString& symbol);
 
 private:
     void setupUI();
     void fitSceneToView();
+    void updateColumnHeader(int sampleIndex);
 
     // Указатели на основные компоненты (инициализация в конструкторе)
     MainWindow *mainWindowPtr = nullptr;
@@ -51,6 +53,10 @@ private:
     QPushButton *btnRecord = nullptr;
     QPushButton *btnStop = nullptr;
     QPushButton *btnBack = nullptr;
+
+    // Массив выбранных материалов
+    QString m_materialSymbols[4] = {"", "", "", ""};
+    bool m_isDifferentialMode[4] = {false, false, false, false};
 
     // Состояние таблицы и таймера
     int rowCount = 0;

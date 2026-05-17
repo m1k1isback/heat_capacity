@@ -9,6 +9,7 @@ class Material
 public:
     // Конструктор
     Material(const QString& name,
+             const QString& symbol,
              double debyeTempK,      // Θ, К
              double molarMassKgMol,  // M, кг/моль
              double refSpecificHeatJKgK, // c_ref, Дж/(кг·К) при ~300 К
@@ -16,6 +17,7 @@ public:
 
     // === Геттеры (константные) ===
     QString name() const;
+    QString symbol() const;
     double debyeTemperature() const;  // Θ, К
     double molarMass() const;         // M, кг/моль
     double referenceSpecificHeat() const; // c_ref, Дж/(кг·К)
@@ -30,6 +32,7 @@ public:
 
 private:
     QString m_name;
+    QString m_symbol;
     double m_debyeTemperature;   // Θ, К
     double m_molarMass;          // M, кг/моль
     double m_refSpecificHeat;    // c_ref, Дж/(кг·К)

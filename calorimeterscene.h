@@ -6,10 +6,9 @@ class QGraphicsEllipseItem;
 class QGraphicsTextItem;
 class QGraphicsPathItem;
 
-// Необходимые заголовки (базовый класс + типы, используемые по значению)
 #include <QGraphicsScene>
 #include <QVector>
-#include "DigitalDisplay.h"  // Оставлен, т.к. DigitalDisplay используется в массиве указателей
+#include "DigitalDisplay.h"
 
 class CalorimeterScene : public QGraphicsScene
 {

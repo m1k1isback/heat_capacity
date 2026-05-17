@@ -2,11 +2,13 @@
 
 // Конструктор
 Material::Material(const QString& name,
+                   const QString& symbol,
                    double debyeTempK,
                    double molarMassKgMol,
                    double refSpecificHeatJKgK,
                    double densityGcm3)
     : m_name(name)                              // Название материала
+    , m_symbol(symbol)
     , m_debyeTemperature(debyeTempK)            // Температура Дебая
     , m_molarMass(molarMassKgMol)               // Молярная масса
     , m_refSpecificHeat(refSpecificHeatJKgK)    // Удельная теплоёмкость
@@ -28,12 +30,14 @@ QString Material::name() const { return m_name; }
 double Material::debyeTemperature() const { return m_debyeTemperature; }
 double Material::molarMass() const { return m_molarMass; }
 double Material::referenceSpecificHeat() const { return m_refSpecificHeat; }
+QString Material::symbol() const {return m_symbol;}
 
 
 Material Material::copper()
 {
     // Медь (Cu): Θ=343 К, M=63.546 г/моль, c≈385 Дж/(кг·К), ρ=8.96 г/см³
     return Material("Медь (Cu)",
+                    "Cu",
                     343.0,
                     0.063546,
                     385.0,
@@ -44,6 +48,7 @@ Material Material::aluminum()
 {
     // Алюминий (Al): Θ=428 К, M=26.982 г/моль, c≈900 Дж/(кг·К), ρ=2.70 г/см³
     return Material("Алюминий (Al)",
+                    "Al",
                     428.0,
                     0.026982,
                     900.0,
@@ -54,6 +59,7 @@ Material Material::iron()
 {
     // Железо (Fe): Θ=420 К, M=55.845 г/моль, c≈450 Дж/(кг·К), ρ=7.87 г/см³
     return Material("Железо (Fe)",
+                    "Fe",
                     420.0,
                     0.055845,
                     450.0,
@@ -64,6 +70,7 @@ Material Material::lead()
 {
     // Свинец (Pb): Θ=105 К, M=207.2 г/моль, c≈130 Дж/(кг·К), ρ=11.34 г/см³
     return Material("Свинец (Pb)",
+                    "Pb",
                     105.0,
                     0.2072,
                     130.0,

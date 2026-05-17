@@ -31,6 +31,7 @@ signals:
     void samplesStatusUpdated(const QVector<bool>& statuses);
     void sampleActivationRequested(int sampleIndex, bool active);
     void backToMenuRequested();
+    void materialSymbolChanged(int SampleIndex, QString& symbol);
 
 public slots:
     void onSampleCheckboxChanged(int sampleIndex, bool checked);

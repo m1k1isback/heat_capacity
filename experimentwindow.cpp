@@ -1,6 +1,8 @@
 #include "experimentwindow.h"
 #include "mainwindow.h"
 #include "controlpanelwidget.h"
+#include "CalorimeterScene.h"
+#include "mainwindow.h"
 
 #include <QGroupBox>
 #include <QHeaderView>
@@ -15,8 +17,8 @@
 #include <QPushButton>
 #include <QGraphicsView>
 #include <QResizeEvent>
-#include "CalorimeterScene.h"  // Полный тип нужен для создания сцены
-#include "mainwindow.h"
+#include <QTableWidgetItem>
+
 
 ExperimentWindow::ExperimentWindow(MainWindow *parentWindow, QWidget *parent)
     : QMainWindow(parent), mainWindowPtr(parentWindow), rowCount(0), currentTime(0)
@@ -151,6 +153,9 @@ void ExperimentWindow::setupUI()
 
     connect(controlPanel, &ControlPanelWidget::backToMenuRequested,                     // Эмит закрыть окно эксперимента и вернуться в меню
             this, &ExperimentWindow::returnToMainMenuRequested);
+
+    connect(controlPanel, &ControlPanelWidget::materialSymbolChanged,                   // Эмит для установки символа материала
+            this, &ExperimentWindow::onMaterialSymbolChanged);
 }
 
 // Запись точки в таблицу
@@ -170,26 +175,53 @@ void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double
 
 void ExperimentWindow::onTableHeaderChanged(int sampleIndex, bool isDifferential)
 {
-    // Столбцы с температурами начинаются с индекса 1 (0-й — время)
-    int column = sampleIndex + 2;
-    if (column < 2 || column >= tableWidget->columnCount()) {
-        return; // Защита от некорректного индекса
+    // 1. Сохраняем состояние дифференциального режима
+    if (sampleIndex >= 0 && sampleIndex < 4) {
+        m_isDifferentialMode[sampleIndex] = isDifferential;
     }
 
-    // Формируем новый текст заголовка
-    QString newHeader = isDifferential
-                            ? QString("T%1-T0 (°C)").arg(sampleIndex + 1)
-                            : QString("T%1 (°C)").arg(sampleIndex + 1);
+    // 2. Обновляем заголовок через помощника
+    updateColumnHeader(sampleIndex);
+}
+void ExperimentWindow::onMaterialSymbolChanged(int sampleIndex, const QString& symbol)
+{
+    if (sampleIndex < 0 || sampleIndex >= 4) return; //проверка
 
-    // Получаем существующий элемент заголовка или создаём новый
+    m_materialSymbols[sampleIndex] = symbol;
+    updateColumnHeader(sampleIndex); // вызвали метод для установки символа
+}
+
+void ExperimentWindow::updateColumnHeader(int sampleIndex)
+{
+    if (sampleIndex < 0 || sampleIndex >= 4) return; //проверка
+
+    QString symbol = m_materialSymbols[sampleIndex];
+    bool isDifferential = m_isDifferentialMode[sampleIndex];
+
+    int column = sampleIndex + 2; // номер столбца
+
+    if (!tableWidget) return; // проверка
     QTableWidgetItem* headerItem = tableWidget->horizontalHeaderItem(column);
-    if (!headerItem) {
-        headerItem = new QTableWidgetItem();
-        tableWidget->setHorizontalHeaderItem(column, headerItem);
+    if (!headerItem) return; // проверка
+
+    // Форматирование
+    int sampleNumber = sampleIndex + 1;  // T1, T2, T3, T4
+    QString headerText;
+
+    if (symbol.isEmpty()) {
+        // Материал не выбран: просто "T1 (°C)" или "T1-T0 (°C)"
+        headerText = isDifferential
+                         ? QString("T%1-T0 (°C)").arg(sampleNumber)
+                         : QString("T%1 (°C)").arg(sampleNumber);
+    } else {
+        // Материал выбран: "T1 (°C) Cu" или "T1-T0 (°C) Cu"
+        headerText = isDifferential
+                         ? QString("T%1-T0 (°C) %2").arg(sampleNumber).arg(symbol)
+                         : QString("T%1 (°C) %2").arg(sampleNumber).arg(symbol);
     }
 
-    // Применяем изменения
-    headerItem->setText(newHeader);
+    // Установка заголовка
+    headerItem->setText(headerText);
 }
 
 void ExperimentWindow::onTableReset() {
