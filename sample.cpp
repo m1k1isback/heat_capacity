@@ -8,10 +8,15 @@ Sample::Sample(int idx, const Material& mat, double massG)
     : id(idx), material(mat), massGrams(massG), currentTemp(20.0), isActive(false)
 {}
 
-// Расчет теплоемкости образца по формуле масса умножить на удельную теплоемкость
 // Нужно для движка
+// Расчет теплоемкости образца с учетом зависимости от температуры (Модель Дебая)
 double Sample::calculateHeatCapacity() const
 {
     if (!isActive) return 0.0;
-    return material.referenceSpecificHeat() * (massGrams / 1000.0);
+
+    // Получаем удельную теплоёмкость именно для текущей температуры образца
+    double specificHeatAtCurrentTemp = material.getSpecificHeatAt(currentTemp);
+
+    // Умножаем на массу в кг, чтобы получить полную теплоёмкость в Дж/К
+    return specificHeatAtCurrentTemp * (massGrams / 1000.0);
 }

@@ -21,6 +21,9 @@ public slots:
     void setSampleActive(int index, bool active);
     void setDifferentialMode(int index, bool enabled);
 signals:
+    // <--- ДОБАВИТЬ: Новый сигнал специально для дисплеев (чтобы график оставался плавным)
+    void displayTemperaturesUpdated(const QVector<double>& noisyTemps, double elapsedSec);
+
     void temperaturesUpdated(QVector<double> newTemps, double elapsedSec);
     void stateChanged(ExperimentState newState);
     void pointRecorded(int pointIndex, double currentTimeSec, QVector<double> temps);
@@ -31,6 +34,9 @@ signals:
     void tableReset();
 private slots:
     void onTimerTick();
+
+    void onDisplayUpdateTick();      // <--- ДОБАВИТЬ: Слот для генерации шума
+    double generateNoise(double trueTemp); // <--- ДОБАВИТЬ: Функция генерации случайного отклонения
 private:
     QTimer* m_timer;
     double m_elapsedSec; //время эксперимента
@@ -45,4 +51,7 @@ private:
     static constexpr double K_CONST = 5.20;  // Дж/(мин·К)
     static constexpr double C_K = 210.0;     // Дж/К
     double m_T1_CoolingStart = 60.0;
+
+    QTimer *m_displayTimer;          // <--- ДОБАВИТЬ: Таймер для обновления дисплеев (0.5 сек)
+    QVector<double> m_lastNoisyTemps; // <--- ДОБАВИТЬ: Хранит последние зашумленные значения для протокола
 };

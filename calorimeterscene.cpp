@@ -34,7 +34,7 @@ void CalorimeterScene::buildLayout()
     addItem(body);
 
     // Текст "ВАКУУМНЫЙ КАЛОРИМЕТР"
-   /* QGraphicsTextItem *title = new QGraphicsTextItem("ВАКУУМНЫЙ КАЛОРИМЕТР");
+    /* QGraphicsTextItem *title = new QGraphicsTextItem("ВАКУУМНЫЙ КАЛОРИМЕТР");
     title->setFont(QFont("Arial", 14, QFont::Bold));
     title->setDefaultTextColor(QColor("#333"));
     // Центрируем текст по ширине сцены
@@ -412,7 +412,7 @@ void CalorimeterScene::onDifferentialModeToggled(int sampleIndex, bool enabled){
     emit tableHeaderChanged(sampleIndex, enabled);
 }
 
- // Метод для расчета температуры для одного образца а не всех разом
+// Метод для расчета температуры для одного образца а не всех разом
 void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, double T0){
     if (sampleIndex < 0 || sampleIndex >= 4) return;
     if (!isActive[sampleIndex]) {
@@ -429,7 +429,7 @@ void CalorimeterScene::updateDisplayForSample(int sampleIndex, double T_sample, 
         displays[sampleIndex]->setValue(T_sample);
         displays[sampleIndex]->setPrefix("T");
         displays[sampleIndex]->setTextColor(Qt::green);
-}
+    }
 }
 
 // Сеттер температуры среды
@@ -442,10 +442,11 @@ void CalorimeterScene::setEnvironmentTemperature(double t0)
 void CalorimeterScene::onPhysicsTemperaturesUpdated(const QVector<double>& temps, int elapsedSec)
 {
     Q_UNUSED(elapsedSec);
+    Q_UNUSED(temps);
 
-    if (temps.size() >= 4) {
-        updateTemperatures(temps[0], temps[1], temps[2], temps[3], m_lastT0);
-    }
+    //if (temps.size() >= 4) {
+   //     updateTemperatures(temps[0], temps[1], temps[2], temps[3], m_lastT0);
+    //}
 }
 
 // ?
@@ -459,4 +460,22 @@ void CalorimeterScene::setSampleActive(int index, bool active)
     checkBoxes[index]->setChecked(active);
     checkBoxes[index]->setEnabled(active);  // Разрешаем пользователю снять галочку, если нужно
     checkSample(index, active);             // Вызываем существующую логику (крест, таблица, физика)
+}
+
+// =====================================================================
+// <--- ДОБАВЛЕНО: Новый слот для приема зашумленных температур от движка
+// =====================================================================
+void CalorimeterScene::onDisplayTemperaturesUpdated(const QVector<double>& noisyTemps, int elapsedSec)
+{
+    qDebug() << "=== ПОЛУЧЕНЫ ДАННЫЕ ДЛЯ ДИСПЛЕЯ ===";
+    qDebug() << "T1:" << noisyTemps[0] << "T2:" << noisyTemps[1];
+    qDebug() << "T3:" << noisyTemps[2] << "T4:" << noisyTemps[3];
+
+    Q_UNUSED(elapsedSec);
+
+    if (noisyTemps.size() >= 4) {
+        // Передаем зашумленные значения в существующий метод отрисовки дисплеев
+        // Температура среды (m_lastT0) передается без изменений, так как она стабильна
+        updateTemperatures(noisyTemps[0], noisyTemps[1], noisyTemps[2], noisyTemps[3], m_lastT0);
+    }
 }

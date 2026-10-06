@@ -115,7 +115,6 @@ void ExperimentWindow::setupUI()
 
     mainHLayout->addWidget(controlPanel, 1);  // 1 = 20% ширины окна
 
-
     // КОННЕКТЫ БЭКЭНДА И ФРОНТЕНДА
 
     connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated,             // Обновление температур на дисплеях
@@ -156,6 +155,13 @@ void ExperimentWindow::setupUI()
 
     connect(controlPanel, &ControlPanelWidget::materialSymbolChanged,                   // Эмит для установки символа материала
             this, &ExperimentWindow::onMaterialSymbolChanged);
+
+    // Вместо physicsEngine используем controlPanel->getEngine()
+    // Вместо calorimeterScene используем scene (или m_scene, как у тебя принято)
+
+    // Подключаем сигнал шума дисплеев от движка к сцене
+    connect(controlPanel->getEngine(), &PhysicsEngine::displayTemperaturesUpdated,
+            scene, &CalorimeterScene::onDisplayTemperaturesUpdated);
 }
 
 // Запись точки в таблицу

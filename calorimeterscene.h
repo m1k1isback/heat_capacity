@@ -29,6 +29,9 @@ signals:
     void tableHeaderChanged(int index, bool isDifferential);
 
 public slots:
+    // В calorimeterscene.h внутри slots:
+    void onDisplayTemperaturesUpdated(const QVector<double>& noisyTemps, int elapsedSec);
+
     // Слоты для приёма данных от физического движка и UI
     void updateTemperatures(double t1, double t2, double t3, double t4, double t0);
     void checkSample(int a, bool checked);
