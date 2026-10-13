@@ -1,6 +1,8 @@
 #pragma once
 
-// Forward declarations (используются только как указатели — ускоряет компиляцию)
+#include <QMainWindow>
+#include <QVector>
+
 class MainWindow;
 class CalorimeterScene;
 class QGraphicsView;
@@ -9,10 +11,7 @@ class QPushButton;
 class QVBoxLayout;
 class QHBoxLayout;
 class QResizeEvent;
-
-// Необходимые заголовки (базовый класс + типы по значению в сигнатурах)
-#include <QMainWindow>
-#include <QVector>
+class ControlPanelWidget;
 
 class ExperimentWindow : public QMainWindow
 {
@@ -20,10 +19,9 @@ class ExperimentWindow : public QMainWindow
 
 public:
     explicit ExperimentWindow(MainWindow *parentWindow = nullptr, QWidget *parent = nullptr);
-    ~ExperimentWindow() override;  // Деструктор объявлен в .cpp, поэтому не = default
+    ~ExperimentWindow() override;
 
 protected:
-    // Переопределяем событие изменения размера для динамического масштабирования
     void resizeEvent(QResizeEvent *event) override;
 
 signals:
@@ -42,23 +40,15 @@ private:
     void fitSceneToView();
     void updateColumnHeader(int sampleIndex);
 
-    // Указатели на основные компоненты (инициализация в конструкторе)
     MainWindow *mainWindowPtr = nullptr;
     CalorimeterScene *scene = nullptr;
     QGraphicsView *graphicsView = nullptr;
     QTableWidget *tableWidget = nullptr;
+    ControlPanelWidget *controlPanel = nullptr;
 
-    // Кнопки управления
-    QPushButton *btnStart = nullptr;
-    QPushButton *btnRecord = nullptr;
-    QPushButton *btnStop = nullptr;
-    QPushButton *btnBack = nullptr;
-
-    // Массив выбранных материалов
     QString m_materialSymbols[4] = {"", "", "", ""};
     bool m_isDifferentialMode[4] = {false, false, false, false};
 
-    // Состояние таблицы и таймера
     int rowCount = 0;
     int currentTime = 0;
 };
