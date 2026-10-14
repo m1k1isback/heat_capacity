@@ -280,6 +280,7 @@ void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& mater
 
     emit sampleActivationRequested(sampleIndex, true);
     emit materialSymbolChanged(sampleIndex, mat.symbol());
+    emit materialNameChanged(sampleIndex, materialName);
 }
 
 void ControlPanelWidget::clearSampleLabel(int sampleIndex)

@@ -8,6 +8,7 @@ class QGraphicsPathItem;
 
 #include <QGraphicsScene>
 #include <QVector>
+#include <QString>
 #include "DigitalDisplay.h"
 
 class CalorimeterScene : public QGraphicsScene
@@ -21,6 +22,12 @@ public:
     void buildLayout();
     void setEnvironmentTemperature(double t0);
 
+    // НОВОЕ: Устанавливает начальную температуру для корректного расчета процента остывания
+    void setCoolingStartTemperature(double startTemp);
+
+    // НОВОЕ: Обновляет штриховку образца в зависимости от названия выбранного материала
+    void setSampleMaterial(int index, const QString& materialName);
+
 signals:
     void sampleVisibilityChanged(int index, bool visible);
     void sampleActiveChanged(int index, bool active);
@@ -29,18 +36,21 @@ signals:
     void tableHeaderChanged(int index, bool isDifferential);
 
 public slots:
-    // В calorimeterscene.h внутри slots:
     void onDisplayTemperaturesUpdated(const QVector<double>& noisyTemps, int elapsedSec);
-
-    // Слоты для приёма данных от физического движка и UI
     void updateTemperatures(double t1, double t2, double t3, double t4, double t0);
     void checkSample(int a, bool checked);
+
+    // НОВОЕ: Слот для плавного обновления цвета на основе "гладких" температур от движка
     void onPhysicsTemperaturesUpdated(const QVector<double>& temps, int elapsedSec);
+
     void onDifferentialModeToggled(int sampleIndex, bool enabled);
     void updateDisplayForSample(int sampleIndex, double T_sample, double T0);
     void setSampleActive(int index, bool active);
 
 private:
+    // НОВОЕ: Метод для пересчета и применения цвета и штриховки к конкретному образцу
+    void updateSampleVisuals(int index, double currentTemp);
+
     // Массив указателей на дисплеи: [0]-T1, [1]-T2, [2]-T3, [3]-T4, [4]-T0
     DigitalDisplay *displays[5] = {nullptr, nullptr, nullptr, nullptr, nullptr};
 
@@ -61,4 +71,10 @@ private:
     double m_T0 = 20.0;
     double m_lastSampleTemps[4] = {0.0, 0.0, 0.0, 0.0};  // T1, T2, T3, T4
     double m_lastT0 = 20.0;
+
+    // НОВОЕ: Хранение начальной температуры остывания для расчета процента
+    double m_startTemps[4] = {0.0, 0.0, 0.0, 0.0};
+
+    // НОВОЕ: Хранение названий материалов для привязки штриховки
+    QString m_currentMaterials[4] = {"", "", "", ""};
 };

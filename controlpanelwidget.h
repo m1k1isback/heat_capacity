@@ -36,6 +36,7 @@ signals:
     void backToMenuRequested();
     void materialSymbolChanged(int sampleIndex, const QString& symbol);
     void coolingStarted(double initialTemp, bool isAccelerated);
+    void materialNameChanged(int sampleIndex, const QString& materialName);
 
 public slots:
     void onSampleCheckboxChanged(int sampleIndex, bool checked);

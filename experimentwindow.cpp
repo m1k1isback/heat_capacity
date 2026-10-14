@@ -130,6 +130,17 @@ void ExperimentWindow::setupUI()
     connect(scene, &CalorimeterScene::tableHeaderChanged, this, &ExperimentWindow::onTableHeaderChanged);
     connect(controlPanel, &ControlPanelWidget::backToMenuRequested, this, &ExperimentWindow::returnToMainMenuRequested);
     connect(controlPanel, &ControlPanelWidget::materialSymbolChanged, this, &ExperimentWindow::onMaterialSymbolChanged);
+
+    // Передаем название материала на сцену для обновления штриховки
+    connect(controlPanel, &ControlPanelWidget::materialNameChanged,
+            scene, &CalorimeterScene::setSampleMaterial);
+
+    // При старте остывания сообщаем сцене начальную температуру для расчета анимации
+    connect(controlPanel, &ControlPanelWidget::coolingStarted,
+            scene, [this](double initialTemp, bool isAccelerated) {
+                Q_UNUSED(isAccelerated);
+                scene->setCoolingStartTemperature(initialTemp);
+            });
 }
 
 void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps)
