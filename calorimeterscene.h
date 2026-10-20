@@ -5,6 +5,8 @@ class QCheckBox;
 class QGraphicsEllipseItem;
 class QGraphicsTextItem;
 class QGraphicsPathItem;
+class QGraphicsRectItem;
+class QGraphicsLineItem;
 
 #include <QGraphicsScene>
 #include <QVector>
@@ -51,17 +53,26 @@ private:
     // НОВОЕ: Метод для пересчета и применения цвета и штриховки к конкретному образцу
     void updateSampleVisuals(int index, double currentTemp);
 
+    // НОВОЕ: Метод для обновления изометрических образцов
+    void updateIsoSampleVisuals(int index, double currentTemp);
+
     // Массив указателей на дисплеи: [0]-T1, [1]-T2, [2]-T3, [3]-T4, [4]-T0
     DigitalDisplay *displays[5] = {nullptr, nullptr, nullptr, nullptr, nullptr};
+
+    DigitalDisplay *m_isoDisplays[4] = {nullptr, nullptr, nullptr, nullptr};
 
     // Состояния и чекбоксы образцов
     bool isActive[4] = {false, false, false, false};
     QCheckBox* checkBoxes[4] = {nullptr, nullptr, nullptr, nullptr};
 
-    // Графические элементы образцов
+    // Графические элементы образцов (вид сверху)
     QGraphicsEllipseItem* m_sampleCircles[4] = {nullptr, nullptr, nullptr, nullptr};
     QGraphicsTextItem* m_sampleCrosses[4] = {nullptr, nullptr, nullptr, nullptr};
     QGraphicsPathItem* m_sampleWires[4] = {nullptr, nullptr, nullptr, nullptr};
+
+    // НОВОЕ: Графические элементы изометрических образцов (верхние грани цилиндров)
+    QGraphicsEllipseItem* m_isoSampleTops[4] = {nullptr, nullptr, nullptr, nullptr};
+    QGraphicsPathItem* m_isoSampleBodies[4] = {nullptr, nullptr, nullptr, nullptr};
 
     // Режим дифференциального показа
     QCheckBox* m_differentialModeCheckBox[4] = {nullptr, nullptr, nullptr, nullptr};
