@@ -778,3 +778,12 @@ void CalorimeterScene::onDisplayTemperaturesUpdated(const QVector<double>& noisy
         updateTemperatures(noisyTemps[0], noisyTemps[1], noisyTemps[2], noisyTemps[3], m_lastT0);
     }
 }
+
+void CalorimeterScene::updateThemeColors(bool isDark)
+{
+    if (isDark) {
+        setBackgroundBrush(QColor("#1e1e1e"));
+    } else {
+        setBackgroundBrush(QColor("#f0f0f0"));
+    }
+}

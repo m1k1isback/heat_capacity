@@ -6,3 +6,4 @@
 #include "EWIEGA46WW/moc_mainwindow.cpp"
 #include "EWIEGA46WW/moc_methodologydialog.cpp"
 #include "EWIEGA46WW/moc_physicsengine.cpp"
+#include "EWIEGA46WW/moc_thememanager.cpp"

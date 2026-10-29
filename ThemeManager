@@ -1,0 +1,10 @@
+#ifndef THEMEMANAGER
+#define THEMEMANAGER
+
+class ThemeManager
+{
+public:
+    ThemeManager();
+};
+
+#endif // THEMEMANAGER

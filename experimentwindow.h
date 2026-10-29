@@ -1,33 +1,29 @@
-#pragma once
+#ifndef EXPERIMENTWINDOW_H
+#define EXPERIMENTWINDOW_H
 
 #include <QMainWindow>
-#include <QVector>
+#include <QTableWidget>
+#include <QGraphicsView>
 
-class MainWindow;
 class CalorimeterScene;
-class QGraphicsView;
-class QTableWidget;
-class QPushButton;
-class QVBoxLayout;
-class QHBoxLayout;
-class QResizeEvent;
 class ControlPanelWidget;
+class MainWindow;
 
 class ExperimentWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit ExperimentWindow(MainWindow *parentWindow = nullptr, QWidget *parent = nullptr);
-    ~ExperimentWindow() override;
+    explicit ExperimentWindow(MainWindow *parentWindow, QWidget *parent = nullptr);
+    ~ExperimentWindow();
 
-protected:
+private:
+    void setupUI();
+    void fitSceneToView();
     void resizeEvent(QResizeEvent *event) override;
+    void updateColumnHeader(int sampleIndex);
 
-signals:
-    void returnToMainMenuRequested();
-
-public slots:
+private slots:
     void onPointRecorded(int id, double time, const QVector<double>& temps);
     void onExportRequested();
     void onSamplesStatusUpdated(const QVector<bool>& statuses);
@@ -35,20 +31,20 @@ public slots:
     void onTableHeaderChanged(int sampleIndex, bool isDifferential);
     void onMaterialSymbolChanged(int sampleIndex, const QString& symbol);
 
+signals:
+    void returnToMainMenuRequested();
+
 private:
-    void setupUI();
-    void fitSceneToView();
-    void updateColumnHeader(int sampleIndex);
+    MainWindow *mainWindowPtr;
+    CalorimeterScene *scene;
+    QGraphicsView *graphicsView;
+    ControlPanelWidget *controlPanel;
+    QTableWidget *tableWidget;
 
-    MainWindow *mainWindowPtr = nullptr;
-    CalorimeterScene *scene = nullptr;
-    QGraphicsView *graphicsView = nullptr;
-    QTableWidget *tableWidget = nullptr;
-    ControlPanelWidget *controlPanel = nullptr;
-
-    QString m_materialSymbols[4] = {"", "", "", ""};
+    int rowCount;
+    int currentTime;
     bool m_isDifferentialMode[4] = {false, false, false, false};
-
-    int rowCount = 0;
-    int currentTime = 0;
+    QString m_materialSymbols[4] = {"", "", "", ""};
 };
+
+#endif // EXPERIMENTWINDOW_H

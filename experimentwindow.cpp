@@ -60,7 +60,6 @@ void ExperimentWindow::setupUI()
     mainHLayout->setContentsMargins(0, 0, 0, 0);
     mainHLayout->setSpacing(0);
 
-    // === ЛЕВАЯ ЧАСТЬ: СЦЕНА + ТАБЛИЦА ===
     QWidget *leftContainer = new QWidget(this);
     leftContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -101,21 +100,15 @@ void ExperimentWindow::setupUI()
     tableLayout->addWidget(tableWidget);
     leftLayout->addWidget(tableGroup, 1);
 
-    // Добавляем левую часть с коэффициентом растяжения 1
     mainHLayout->addWidget(leftContainer, 1);
 
-    // === ПРАВАЯ ЧАСТЬ: ПАНЕЛЬ УПРАВЛЕНИЯ ===
     controlPanel = new ControlPanelWidget(this);
     controlPanel->setFixedWidth(380);
 
-    // Добавляем правую часть с коэффициентом растяжения 0 (занимает только фиксированную ширину, но растягивается по высоте благодаря своей QSizePolicy)
     mainHLayout->addWidget(controlPanel, 0);
-
-    // Явное указание распределения пространства для надежности
     mainHLayout->setStretch(0, 1);
     mainHLayout->setStretch(1, 0);
 
-    // === КОННЕКТЫ ===
     connect(controlPanel->getEngine(), &PhysicsEngine::displayTemperaturesUpdated, scene, &CalorimeterScene::onDisplayTemperaturesUpdated);
     connect(controlPanel->getEngine(), &PhysicsEngine::temperaturesUpdated, scene, &CalorimeterScene::onPhysicsTemperaturesUpdated);
     connect(controlPanel, &ControlPanelWidget::environmentTemperatureSet, scene, &CalorimeterScene::setEnvironmentTemperature);
@@ -131,16 +124,11 @@ void ExperimentWindow::setupUI()
     connect(controlPanel, &ControlPanelWidget::backToMenuRequested, this, &ExperimentWindow::returnToMainMenuRequested);
     connect(controlPanel, &ControlPanelWidget::materialSymbolChanged, this, &ExperimentWindow::onMaterialSymbolChanged);
 
-    // Передаем название материала на сцену для обновления штриховки
-    connect(controlPanel, &ControlPanelWidget::materialNameChanged,
-            scene, &CalorimeterScene::setSampleMaterial);
-
-    // При старте остывания сообщаем сцене начальную температуру для расчета анимации
-    connect(controlPanel, &ControlPanelWidget::coolingStarted,
-            scene, [this](double initialTemp, bool isAccelerated) {
-                Q_UNUSED(isAccelerated);
-                scene->setCoolingStartTemperature(initialTemp);
-            });
+    connect(controlPanel, &ControlPanelWidget::materialNameChanged, scene, &CalorimeterScene::setSampleMaterial);
+    connect(controlPanel, &ControlPanelWidget::coolingStarted, scene, &CalorimeterScene::setCoolingStartTemperature);
+    connect(controlPanel->getEngine(), &PhysicsEngine::samplesConfigured, controlPanel, &ControlPanelWidget::updateActiveSamples);
+    connect(controlPanel->getEngine(), &PhysicsEngine::coolingRatesUpdated, controlPanel, &ControlPanelWidget::updateCoolingRates);
+    connect(controlPanel->getEngine(), &PhysicsEngine::progressUpdated, controlPanel, &ControlPanelWidget::updateProgress);
 }
 
 void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps)

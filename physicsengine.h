@@ -1,11 +1,14 @@
 #pragma once
+
 #include <QObject>
-#include <QTimer>
 #include <QVector>
+#include <QTimer>
 #include "sample.h"
 
-// УПРОЩЕНО: Оставляем только два состояния, так как нагрев и термостатирование убраны
-enum class ExperimentState { Idle, Cooling };
+enum class ExperimentState {
+    Idle,
+    Cooling
+};
 
 class PhysicsEngine : public QObject
 {
@@ -13,54 +16,53 @@ class PhysicsEngine : public QObject
 
 public:
     explicit PhysicsEngine(QObject *parent = nullptr);
-    void configure(double envTemp, const QVector<Sample>& samples);
+    ~PhysicsEngine() override = default;
 
-    // НОВОЕ: Запуск сразу фазы остывания с заданной начальной температурой
-    void startCooling(double initialTemp);
-
-    // НОВОЕ: Установка режима времени (true = ускоренный, false = реальный)
+    void configure(double t0, const QVector<Sample>& samples);
     void setTimeMode(bool isAccelerated);
-
-    void recordPoint();
+    void startCooling(double initialTemp);
     void reset();
+    void recordPoint();
 
-public slots:
+    QVector<Sample> getSamples() const { return m_samples; }
+    double getT0() const { return m_T0; }
+
     void setSampleActive(int index, bool active);
     void setDifferentialMode(int index, bool enabled);
 
 signals:
-    void displayTemperaturesUpdated(const QVector<double>& noisyTemps, double elapsedSec);
-    void temperaturesUpdated(QVector<double> newTemps, double elapsedSec);
-    void stateChanged(ExperimentState newState);
-    void pointRecorded(int pointIndex, double currentTimeSec, QVector<double> temps);
+    void stateChanged(ExperimentState state);
+    void timeUpdated(int seconds);
     void coolingTimeUpdated(double timeSec);
-    void timeUpdated(int totalSeconds);
     void pointsCountUpdated(int count);
+    void temperaturesUpdated(const QVector<double>& temps, int elapsedSec);
+    void displayTemperaturesUpdated(const QVector<double>& noisyTemps, int elapsedSec);
+    void pointRecorded(int id, double time, const QVector<double>& temps);
     void tableReset();
+
+    // Новые сигналы для панели статуса
+    void samplesConfigured(const QVector<Sample>& samples);
+    void coolingRatesUpdated(const QVector<double>& rates);
+    void progressUpdated(const QVector<double>& progress);
 
 private slots:
     void onTimerTick();
-    void onDisplayUpdateTick();
-    double generateNoise(double trueTemp);
 
 private:
-    QTimer* m_timer;
-    double m_elapsedSec;
-    double m_coolingStartSec;
+    QVector<double> addMeasurementNoise(const QVector<double>& temps) const;
+
     ExperimentState m_state;
-    double m_envTemp;
-    QVector<Sample> m_samples;
-    int m_pointCount;
-    double m_coolingTimeSec;
-    bool m_isDifferentialMode[4];
-
-    // НОВОЕ: Флаг режима времени
+    int m_elapsedSec;
+    double m_T0;
     bool m_isAcceleratedMode;
+    QVector<Sample> m_samples;
+    QTimer* m_timer;
 
-    static constexpr double K_CONST = 5.20;  // Дж/(мин·К)
-    static constexpr double C_K = 210.0;     // Дж/К
-    double m_T1_CoolingStart = 60.0;
+    int m_pointsCount;
+    QVector<double> m_lastRecordedTemps;
 
-    QTimer *m_displayTimer;
-    QVector<double> m_lastNoisyTemps;
+    // Переменные для расчета скорости и прогресса
+    QVector<double> m_previousTemps;
+    QVector<double> m_coolingRates;
+    double m_startTemp;
 };

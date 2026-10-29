@@ -13,16 +13,12 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QSlider>
-#include <QRadioButton>
-#include <QButtonGroup>
-// QSpacerItem больше не нужен, но заголовок можно оставить, если он используется где-то еще
+#include <QFrame>
 
 ControlPanelWidget::ControlPanelWidget(QWidget* parent)
     : QWidget(parent)
 {
-    // Устанавливаем политику размера: ширина фиксирована, высота растягивается на всё доступное пространство
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-
     setupUI();
     m_engine = new PhysicsEngine(this);
     setupConnections();
@@ -34,7 +30,9 @@ void ControlPanelWidget::setupUI()
     m_mainLayout->setSpacing(8);
     m_mainLayout->setContentsMargins(5, 5, 5, 5);
 
-    // === 1. Группа "Образцы" ===
+    setMinimumWidth(380);
+    setMaximumWidth(380);
+
     m_sampleGroup = new QGroupBox(tr("Образцы"), this);
     QVBoxLayout* sampleMainLayout = new QVBoxLayout(m_sampleGroup);
     sampleMainLayout->setSpacing(4);
@@ -89,7 +87,6 @@ void ControlPanelWidget::setupUI()
 
     m_mainLayout->addWidget(m_sampleGroup);
 
-    // === 2. Группа "Параметры" ===
     m_envAndStartGroup = new QGroupBox(tr("Параметры"), this);
     QGridLayout* gridLayout = new QGridLayout(m_envAndStartGroup);
     gridLayout->setSpacing(5);
@@ -111,14 +108,13 @@ void ControlPanelWidget::setupUI()
     humidity->setFixedWidth(85);
     gridLayout->addWidget(humidity, 0, 3);
 
-    // Параметры калориметра — делаем крупнее и контрастнее
     QLabel* calibHeader = new QLabel("Параметры калориметра:", this);
     calibHeader->setStyleSheet("font-weight: bold; font-size: 12px; color: #2c3e50;");
     gridLayout->addWidget(calibHeader, 1, 0, 1, 4);
 
     QLabel* consts = new QLabel("k = 5.20 Дж/(мин·К),  Ck = 210 Дж/К", this);
-    consts->setStyleSheet("color: #000000; font-size: 13px; font-weight: normal;");  // Чёрный цвет, крупнее
-    consts->setFont(QFont("Segoe UI", 11));  // Явно задаём шрифт покрупнее
+    consts->setStyleSheet("color: #000000; font-size: 13px; font-weight: normal;");
+    consts->setFont(QFont("Segoe UI", 11));
     gridLayout->addWidget(consts, 2, 0, 1, 4);
 
     gridLayout->addWidget(new QLabel("T нач.:"), 3, 0);
@@ -141,38 +137,27 @@ void ControlPanelWidget::setupUI()
         initialTempSlider->setValue(val);
     });
 
-    gridLayout->addWidget(new QLabel("Режим:"), 4, 0);
-    QWidget* radioWidget = new QWidget(this);
-    QHBoxLayout* radioLayout = new QHBoxLayout(radioWidget);
-    radioLayout->setContentsMargins(0, 0, 0, 0);
-    radioLayout->setSpacing(10);
-
-    radioAccelerated = new QRadioButton(tr("Ускоренный"), this);
-    radioAccelerated->setToolTip("1 сек реального времени = 5 мин симуляции");
-    radioReal = new QRadioButton(tr("Реальный"), this);
-    radioReal->setToolTip("1 сек реального времени = 1 сек симуляции");
-
-    radioAccelerated->setChecked(true);
-
-    radioLayout->addWidget(radioAccelerated);
-    radioLayout->addWidget(radioReal);
-    radioLayout->addStretch();
-    gridLayout->addWidget(radioWidget, 4, 1, 1, 3);
-
     m_mainLayout->addWidget(m_envAndStartGroup);
 
-    // === 3. Группа "Действия" ===
     m_controlGroup = new QGroupBox(tr("Действия"), this);
     QVBoxLayout* manageLayout = new QVBoxLayout(m_controlGroup);
     manageLayout->setSpacing(6);
 
     startCoolingBtn = new QPushButton(tr("▶ Старт остывания"), this);
     startCoolingBtn->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; padding: 6px;");
+    startCoolingBtn->setToolTip("Начать эксперимент по остыванию образцов.");
 
-    write_point = new QPushButton(tr(" Записать точку"), this);
-    reset_btn = new QPushButton(tr(" Сброс"), this);
+    write_point = new QPushButton(tr("📋 Записать точку"), this);
+    write_point->setToolTip("Записать текущие показания термометров в протокол измерений.");
+
+    reset_btn = new QPushButton(tr("↺ Сброс"), this);
+    reset_btn->setToolTip("Сбросить эксперимент: очистить таблицу, остановить таймер.");
+
     export_btn = new QPushButton(tr("💾 Экспорт в CSV"), this);
+    export_btn->setToolTip("Экспортировать протокол измерений в CSV файл.");
+
     back_btn = new QPushButton(tr("← В главное меню"), this);
+    back_btn->setToolTip("Вернуться в главное меню программы.");
 
     manageLayout->addWidget(startCoolingBtn);
     manageLayout->addWidget(write_point);
@@ -182,39 +167,45 @@ void ControlPanelWidget::setupUI()
 
     m_mainLayout->addWidget(m_controlGroup);
 
-    // === 4. Группа "Статус" ===
     m_statusGroup = new QGroupBox(tr("Статус"), this);
-    m_statusGroup->setFont(QFont("Segoe UI", 10));  // Увеличиваем шрифт всей группы
+    m_statusGroup->setFont(QFont("Segoe UI", 10));
 
-    QFormLayout* statusLayout = new QFormLayout(m_statusGroup);
-    statusLayout->setSpacing(6);  // Немного больше отступы
-    statusLayout->setLabelAlignment(Qt::AlignRight);  // Выравнивание меток вправо
+    QVBoxLayout* statusVBoxLayout = new QVBoxLayout(m_statusGroup);
+    statusVBoxLayout->setSpacing(6);
 
-    phase = new QLabel(tr("Ожидание"), this);
-    phase->setFont(QFont("Segoe UI", 10, QFont::Bold));  // Жирный шрифт
-    statusLayout->addRow(tr("Фаза:"), phase);
+    m_activeSamplesLabel = new QLabel("Образцы: нет", this);
+    m_activeSamplesLabel->setStyleSheet("color: #2c3e50; font-size: 11px;");
+    statusVBoxLayout->addWidget(m_activeSamplesLabel);
+
+    m_coolingRateLabel = new QLabel("Скорость: —", this);
+    m_coolingRateLabel->setStyleSheet("color: #2c3e50; font-size: 11px;");
+    statusVBoxLayout->addWidget(m_coolingRateLabel);
+
+    m_progressLabel = new QLabel("Прогресс: —", this);
+    m_progressLabel->setStyleSheet("color: #2c3e50; font-size: 11px;");
+    statusVBoxLayout->addWidget(m_progressLabel);
+
+    QFrame* line = new QFrame(this);
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    statusVBoxLayout->addWidget(line);
+
+    QFormLayout* statusLayout = new QFormLayout();
+    statusLayout->setSpacing(4);
 
     time = new QLabel(tr("00:00"), this);
-    time->setFont(QFont("Segoe UI", 10, QFont::Bold));  // Жирный шрифт
-    time->setStyleSheet("color: #2c3e50;");  // Тёмно-синий для контраста
+    time->setFont(QFont("Segoe UI", 10, QFont::Bold));
+    time->setStyleSheet("color: #2c3e50;");
     statusLayout->addRow(tr("Время:"), time);
-
-    m_coolingTimeLabel = new QLabel(tr("00:00"), this);
-    m_coolingTimeLabel->setFont(QFont("Segoe UI", 10, QFont::Bold));
-    m_coolingTimeLabel->setStyleSheet("color: #2c3e50;");
-    statusLayout->addRow(tr("Остывание:"), m_coolingTimeLabel);
 
     pointsLabel = new QLabel("0", this);
     pointsLabel->setFont(QFont("Segoe UI", 10, QFont::Bold));
     pointsLabel->setStyleSheet("color: #2c3e50;");
     statusLayout->addRow(tr("Точек:"), pointsLabel);
 
-    m_mainLayout->addWidget(m_statusGroup);
+    statusVBoxLayout->addLayout(statusLayout);
 
-    // !!! ИСПРАВЛЕНИЕ: Строка с QSpacerItem полностью удалена.
-    // Ранее она была здесь: m_mainLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    // Её удаление позволяет виджетам группы "Статус" и другим элементам естественно заполнить всё доступное вертикальное пространство,
-    // устраняя пустоту внизу, так как QSizePolicy::Expanding у самого ControlPanelWidget теперь работает корректно.
+    m_mainLayout->addWidget(m_statusGroup);
 }
 
 void ControlPanelWidget::setupConnections()
@@ -252,14 +243,13 @@ void ControlPanelWidget::onStartCoolingClicked()
 
     double t0 = T0->value();
     double initialTemp = initialTempSpinBox->value();
-    bool isAccelerated = radioAccelerated->isChecked();
 
     m_engine->configure(t0, samples);
-    m_engine->setTimeMode(isAccelerated);
+    m_engine->setTimeMode(false);
     emit environmentTemperatureSet(t0);
 
     m_engine->startCooling(initialTemp);
-    emit coolingStarted(initialTemp, isAccelerated);
+    emit coolingStarted(initialTemp);
 }
 
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
@@ -316,11 +306,7 @@ void ControlPanelWidget::onSampleCheckboxChanged(int index, bool checked){
 
 void ControlPanelWidget::onStateChanged(ExperimentState state)
 {
-    switch (state) {
-    case ExperimentState::Idle: phase->setText("Ожидание"); break;
-    case ExperimentState::Cooling: phase->setText("Остывание"); break;
-    default: phase->setText("Неизвестно"); break;
-    }
+    Q_UNUSED(state);
 }
 
 void ControlPanelWidget::onTimeUpdated(int seconds)
@@ -337,8 +323,54 @@ void ControlPanelWidget::onPointsCountUpdated(int count)
 
 void ControlPanelWidget::onCoolingTimeUpdated(double timeSec)
 {
-    int totalSeconds = static_cast<int>(timeSec);
-    int minutes = totalSeconds / 60;
-    int seconds = totalSeconds % 60;
-    m_coolingTimeLabel->setText(QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0')));
+    Q_UNUSED(timeSec);
+}
+
+void ControlPanelWidget::updateActiveSamples(const QVector<Sample>& samples)
+{
+    QStringList activeList;
+    for (int i = 0; i < samples.size(); ++i) {
+        if (samples[i].isActive && !samples[i].material.name().isEmpty()) {
+            activeList << QString("%1(%2г)").arg(samples[i].material.symbol())
+                              .arg(samples[i].massGrams, 0, 'f', 0);
+        }
+    }
+
+    if (activeList.isEmpty()) {
+        m_activeSamplesLabel->setText("Образцы: нет");
+    } else {
+        m_activeSamplesLabel->setText("Образцы: " + activeList.join(", "));
+    }
+}
+
+void ControlPanelWidget::updateCoolingRates(const QVector<double>& rates)
+{
+    QStringList rateList;
+    for (int i = 0; i < rates.size(); ++i) {
+        if (rates[i] != 0.0) {
+            rateList << QString("T%1:%2").arg(i + 1).arg(rates[i], 0, 'f', 1);
+        }
+    }
+
+    if (rateList.isEmpty()) {
+        m_coolingRateLabel->setText("Скорость: —");
+    } else {
+        m_coolingRateLabel->setText("Скорость: " + rateList.join(", ") + " °C/мин");
+    }
+}
+
+void ControlPanelWidget::updateProgress(const QVector<double>& progress)
+{
+    QStringList progressList;
+    for (int i = 0; i < progress.size(); ++i) {
+        if (progress[i] > 0.0) {
+            progressList << QString("T%1:%2%").arg(i + 1).arg(static_cast<int>(progress[i]));
+        }
+    }
+
+    if (progressList.isEmpty()) {
+        m_progressLabel->setText("Прогресс: —");
+    } else {
+        m_progressLabel->setText("Прогресс: " + progressList.join(", "));
+    }
 }

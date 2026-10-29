@@ -30,6 +30,7 @@ public:
     // НОВОЕ: Обновляет штриховку образца в зависимости от названия выбранного материала
     void setSampleMaterial(int index, const QString& materialName);
 
+    void updateThemeColors(bool isDark);
 signals:
     void sampleVisibilityChanged(int index, bool visible);
     void sampleActiveChanged(int index, bool active);

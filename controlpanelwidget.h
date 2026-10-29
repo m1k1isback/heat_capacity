@@ -15,8 +15,6 @@ class QSpinBox;
 class QPushButton;
 class QLabel;
 class QSlider;
-class QRadioButton;
-class QButtonGroup;
 
 class ControlPanelWidget : public QWidget
 {
@@ -35,11 +33,14 @@ signals:
     void sampleActivationRequested(int sampleIndex, bool active);
     void backToMenuRequested();
     void materialSymbolChanged(int sampleIndex, const QString& symbol);
-    void coolingStarted(double initialTemp, bool isAccelerated);
     void materialNameChanged(int sampleIndex, const QString& materialName);
+    void coolingStarted(double initialTemp);
 
 public slots:
     void onSampleCheckboxChanged(int sampleIndex, bool checked);
+    void updateActiveSamples(const QVector<Sample>& samples);
+    void updateCoolingRates(const QVector<double>& rates);
+    void updateProgress(const QVector<double>& progress);
 
 private slots:
     void setupConnections();
@@ -84,8 +85,6 @@ private:
 
     QSlider* initialTempSlider = nullptr;
     QDoubleSpinBox* initialTempSpinBox = nullptr;
-    QRadioButton* radioAccelerated = nullptr;
-    QRadioButton* radioReal = nullptr;
 
     QPushButton* startCoolingBtn = nullptr;
     QPushButton* write_point = nullptr;
@@ -93,7 +92,9 @@ private:
     QPushButton* export_btn = nullptr;
     QPushButton* back_btn = nullptr;
 
-    QLabel* phase = nullptr;
+    QLabel* m_activeSamplesLabel = nullptr;
+    QLabel* m_coolingRateLabel = nullptr;
+    QLabel* m_progressLabel = nullptr;
     QLabel* time = nullptr;
     QLabel* pointsLabel = nullptr;
     QLabel* m_coolingTimeLabel = nullptr;

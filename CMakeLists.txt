@@ -32,6 +32,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sample.h sample.cpp
         physicsengine.h physicsengine.cpp
         guidedialog.h guidedialog.cpp
+        thememanager.h thememanager.cpp
+        resources.qrc
+
+
     )
 else()
     if(ANDROID)
