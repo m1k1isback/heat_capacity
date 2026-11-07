@@ -165,7 +165,6 @@ void ControlPanelWidget::setupUI()
 
     gridLayout->addLayout(autoRecordLayout, 4, 0, 1, 4);
 
-    // Коннекты для активации/деактивации спинбокса
     connect(m_autoRecordCheckBox, &QCheckBox::toggled, intervalLabel, &QLabel::setEnabled);
     connect(m_autoRecordCheckBox, &QCheckBox::toggled, m_autoRecordIntervalSpinBox, &QSpinBox::setEnabled);
 
@@ -219,6 +218,11 @@ void ControlPanelWidget::setupUI()
     m_progressLabel->setStyleSheet("color: #2c3e50; font-size: 11px;");
     statusVBoxLayout->addWidget(m_progressLabel);
 
+    // === НОВОЕ: Теплоемкость ===
+    m_heatCapacityLabel = new QLabel("Теплоемкость: —", this);
+    m_heatCapacityLabel->setStyleSheet("color: #2c3e50; font-size: 11px;");
+    statusVBoxLayout->addWidget(m_heatCapacityLabel);
+
     QFrame* line = new QFrame(this);
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
@@ -259,6 +263,10 @@ void ControlPanelWidget::setupConnections()
     connect(m_autoRecordCheckBox, &QCheckBox::toggled, m_engine, &PhysicsEngine::setAutoRecordEnabled);
     connect(m_autoRecordIntervalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             m_engine, &PhysicsEngine::setAutoRecordInterval);
+    connect(m_engine, &PhysicsEngine::autoRecordToggled, m_autoRecordCheckBox, &QCheckBox::setChecked);
+
+    // Коннект для обновления теплоемкости
+    connect(m_engine, &PhysicsEngine::heatCapacityUpdated, this, &ControlPanelWidget::updateHeatCapacities);
 }
 
 void ControlPanelWidget::onStartCoolingClicked()
@@ -290,7 +298,6 @@ void ControlPanelWidget::onStartCoolingClicked()
     m_engine->startCooling(initialTemp);
     emit coolingStarted(initialTemp);
 
-    // Если автозапись была включена до старта — запускаем её
     if (m_autoRecordCheckBox->isChecked()) {
         m_engine->setAutoRecordEnabled(true);
     }
@@ -416,5 +423,22 @@ void ControlPanelWidget::updateProgress(const QVector<double>& progress)
         m_progressLabel->setText("Прогресс: —");
     } else {
         m_progressLabel->setText("Прогресс: " + progressList.join(", "));
+    }
+}
+
+// === НОВЫЙ МЕТОД: обновление теплоемкости ===
+void ControlPanelWidget::updateHeatCapacities(const QVector<double>& heatCapacities)
+{
+    QStringList capacityList;
+    for (int i = 0; i < heatCapacities.size(); ++i) {
+        if (heatCapacities[i] > 0.0) {
+            capacityList << QString("T%1:%2").arg(i + 1).arg(heatCapacities[i], 0, 'f', 0);
+        }
+    }
+
+    if (capacityList.isEmpty()) {
+        m_heatCapacityLabel->setText("Теплоемкость: — (нужно ≥3 точек)");
+    } else {
+        m_heatCapacityLabel->setText("Теплоемкость: " + capacityList.join(", ") + " Дж/(кг·К)");
     }
 }

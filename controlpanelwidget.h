@@ -42,6 +42,7 @@ public slots:
     void updateActiveSamples(const QVector<Sample>& samples);
     void updateCoolingRates(const QVector<double>& rates);
     void updateProgress(const QVector<double>& progress);
+    void updateHeatCapacities(const QVector<double>& heatCapacities);
 
 private slots:
     void setupConnections();
@@ -99,6 +100,7 @@ private:
     QLabel* m_activeSamplesLabel = nullptr;
     QLabel* m_coolingRateLabel = nullptr;
     QLabel* m_progressLabel = nullptr;
+    QLabel* m_heatCapacityLabel = nullptr;
     QLabel* time = nullptr;
     QLabel* pointsLabel = nullptr;
     QLabel* m_coolingTimeLabel = nullptr;

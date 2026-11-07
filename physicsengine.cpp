@@ -17,16 +17,16 @@ PhysicsEngine::PhysicsEngine(QObject *parent)
     m_autoRecordTimer(new QTimer(this)),
     m_pointsCount(0),
     m_startTemp(0.0),
-    m_autoRecordIntervalSec(60)  // Инициализация интервала по умолчанию (60 сек)
+    m_autoRecordIntervalSec(60)
 {
     m_previousTemps.resize(4, 0.0);
     m_coolingRates.resize(4, 0.0);
     m_lastRecordedTemps.resize(4, 0.0);
+    m_recordedTemps.resize(4);
 
     connect(m_timer, &QTimer::timeout, this, &PhysicsEngine::onTimerTick);
     connect(m_autoRecordTimer, &QTimer::timeout, this, &PhysicsEngine::onAutoRecordTick);
 
-    // Устанавливаем интервал по умолчанию сразу
     m_autoRecordTimer->setInterval(m_autoRecordIntervalSec * 1000);
 }
 
@@ -49,6 +49,11 @@ void PhysicsEngine::startCooling(double initialTemp)
     m_pointsCount = 0;
     m_startTemp = initialTemp;
 
+    m_recordedTimes.clear();
+    for (int i = 0; i < 4; ++i) {
+        m_recordedTemps[i].clear();
+    }
+
     for (int i = 0; i < 4; ++i) {
         if (m_samples[i].isActive) {
             m_samples[i].currentTemp = initialTemp;
@@ -68,6 +73,7 @@ void PhysicsEngine::startCooling(double initialTemp)
     emit pointsCountUpdated(0);
     emit coolingRatesUpdated(m_coolingRates);
     emit progressUpdated(QVector<double>(4, 0.0));
+    emit heatCapacityUpdated(QVector<double>(4, 0.0));
 
     m_timer->start(1000);
 }
@@ -81,11 +87,17 @@ void PhysicsEngine::reset()
     m_pointsCount = 0;
     m_coolingRates.fill(0.0, 4);
 
+    m_recordedTimes.clear();
+    for (int i = 0; i < 4; ++i) {
+        m_recordedTemps[i].clear();
+    }
+
     emit stateChanged(m_state);
     emit timeUpdated(0);
     emit pointsCountUpdated(0);
     emit coolingRatesUpdated(m_coolingRates);
     emit progressUpdated(QVector<double>(4, 0.0));
+    emit heatCapacityUpdated(QVector<double>(4, 0.0));
     emit autoRecordToggled(false);
     emit tableReset();
 }
@@ -100,16 +112,20 @@ void PhysicsEngine::recordPoint()
         currentTemps[i] = m_samples[i].isActive ? m_samples[i].currentTemp : 0.0;
     }
 
+    m_recordedTimes.append(m_elapsedSec);
+    for (int i = 0; i < 4; ++i) {
+        m_recordedTemps[i].append(currentTemps[i]);
+    }
+
+    calculateHeatCapacities();
+
     emit pointRecorded(m_pointsCount, m_elapsedSec, currentTemps);
     emit pointsCountUpdated(m_pointsCount);
 }
 
-// === ИСПРАВЛЕННЫЕ МЕТОДЫ АВТОЗАПИСИ ===
-
 void PhysicsEngine::setAutoRecordEnabled(bool enabled)
 {
     if (enabled && m_state == ExperimentState::Cooling) {
-        // ВАЖНО: запускаем с правильным интервалом, а не с 0!
         m_autoRecordTimer->start(m_autoRecordIntervalSec * 1000);
     } else {
         m_autoRecordTimer->stop();
@@ -119,12 +135,11 @@ void PhysicsEngine::setAutoRecordEnabled(bool enabled)
 
 void PhysicsEngine::setAutoRecordInterval(int seconds)
 {
-    if (seconds < 1) seconds = 1;  // защита от 0 и отрицательных
+    if (seconds < 1) seconds = 1;
     m_autoRecordIntervalSec = seconds;
     int intervalMs = seconds * 1000;
     m_autoRecordTimer->setInterval(intervalMs);
 
-    // Если таймер активен — перезапускаем с новым интервалом
     if (m_autoRecordTimer->isActive()) {
         m_autoRecordTimer->stop();
         m_autoRecordTimer->start(intervalMs);
@@ -181,6 +196,66 @@ void PhysicsEngine::onTimerTick()
 
     QVector<double> noisyTemps = addMeasurementNoise(newTemps);
     emit displayTemperaturesUpdated(noisyTemps, m_elapsedSec);
+}
+
+void PhysicsEngine::calculateHeatCapacities()
+{
+    if (m_recordedTimes.size() < 3) {
+        emit heatCapacityUpdated(QVector<double>(4, 0.0));
+        return;
+    }
+
+    QVector<double> heatCapacities(4, 0.0);
+
+    for (int i = 0; i < 4; ++i) {
+        if (!m_samples[i].isActive) continue;
+
+        QVector<double> x = m_recordedTimes;
+        QVector<double> y;
+
+        for (int j = 0; j < m_recordedTemps[i].size(); ++j) {
+            double deltaT = m_recordedTemps[i][j] - m_T0;
+            if (deltaT > 0.1) {
+                y.append(std::log(deltaT));
+            } else {
+                y.append(0.0);
+            }
+        }
+
+        double slope = linearRegressionSlope(x, y);
+
+        if (slope < -0.0001) {
+            double C_total = -K_CALORIMETER_PER_SEC / slope;
+            double C_sample = C_total - C_K;
+            double mass_kg = m_samples[i].massGrams / 1000.0;
+            if (mass_kg > 0.001) {
+                heatCapacities[i] = C_sample / mass_kg;
+            }
+        }
+    }
+
+    emit heatCapacityUpdated(heatCapacities);
+}
+
+double PhysicsEngine::linearRegressionSlope(const QVector<double>& x, const QVector<double>& y)
+{
+    int n = x.size();
+    if (n < 2) return 0.0;
+
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+    for (int i = 0; i < n; ++i) {
+        sumX += x[i];
+        sumY += y[i];
+        sumXY += x[i] * y[i];
+        sumX2 += x[i] * x[i];
+    }
+
+    double denominator = n * sumX2 - sumX * sumX;
+    if (std::abs(denominator) < 1e-10) return 0.0;
+
+    double slope = (n * sumXY - sumX * sumY) / denominator;
+    return slope;
 }
 
 QVector<double> PhysicsEngine::addMeasurementNoise(const QVector<double>& temps) const

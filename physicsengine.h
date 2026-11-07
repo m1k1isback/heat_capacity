@@ -46,6 +46,7 @@ signals:
     void coolingRatesUpdated(const QVector<double>& rates);
     void progressUpdated(const QVector<double>& progress);
     void autoRecordToggled(bool enabled);
+    void heatCapacityUpdated(const QVector<double>& heatCapacities);
 
 private slots:
     void onTimerTick();
@@ -53,6 +54,8 @@ private slots:
 
 private:
     QVector<double> addMeasurementNoise(const QVector<double>& temps) const;
+    void calculateHeatCapacities();
+    double linearRegressionSlope(const QVector<double>& x, const QVector<double>& y);
 
     ExperimentState m_state;
     int m_elapsedSec;
@@ -68,5 +71,9 @@ private:
     QVector<double> m_coolingRates;
     double m_startTemp;
 
-    int m_autoRecordIntervalSec;  // НОВОЕ: запоминаем интервал в секундах
+    int m_autoRecordIntervalSec;
+
+    // Хранение точек для МНК
+    QVector<double> m_recordedTimes;
+    QVector<QVector<double>> m_recordedTemps;
 };
