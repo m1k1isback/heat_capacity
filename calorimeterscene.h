@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 // Forward declarations (используются только как указатели — ускоряет компиляцию)
 class QCheckBox;
@@ -31,6 +31,8 @@ public:
     void setSampleMaterial(int index, const QString& materialName);
 
     void updateThemeColors(bool isDark);
+
+    void resetSampleVisuals();
 signals:
     void sampleVisibilityChanged(int index, bool visible);
     void sampleActiveChanged(int index, bool active);

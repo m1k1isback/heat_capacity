@@ -129,6 +129,8 @@ void ExperimentWindow::setupUI()
     connect(controlPanel->getEngine(), &PhysicsEngine::samplesConfigured, controlPanel, &ControlPanelWidget::updateActiveSamples);
     connect(controlPanel->getEngine(), &PhysicsEngine::coolingRatesUpdated, controlPanel, &ControlPanelWidget::updateCoolingRates);
     connect(controlPanel->getEngine(), &PhysicsEngine::progressUpdated, controlPanel, &ControlPanelWidget::updateProgress);
+
+    connect(controlPanel->getEngine(), &PhysicsEngine::tableReset, scene, &CalorimeterScene::resetSampleVisuals);
 }
 
 void ExperimentWindow::onPointRecorded(int id, double time, const QVector<double>& temps)

@@ -795,3 +795,18 @@ void CalorimeterScene::updateThemeColors(bool isDark)
         setBackgroundBrush(QColor("#f0f0f0"));
     }
 }
+
+void CalorimeterScene::resetSampleVisuals()
+{
+    // Сбрасываем начальные температуры
+    for (int i = 0; i < 4; ++i) {
+        m_startTemps[i] = 0.0;
+
+        // Сбрасываем цвет образцов до серого (температура T0)
+        updateSampleVisuals(i, m_lastT0);
+        updateIsoSampleVisuals(i, m_lastT0);
+
+        // Сбрасываем показания дисплеев до T0
+        updateDisplayForSample(i, m_lastT0, m_lastT0);
+    }
+}
