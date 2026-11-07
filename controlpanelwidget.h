@@ -15,6 +15,7 @@ class QSpinBox;
 class QPushButton;
 class QLabel;
 class QSlider;
+class QCheckBox;
 
 class ControlPanelWidget : public QWidget
 {
@@ -85,6 +86,9 @@ private:
 
     QSlider* initialTempSlider = nullptr;
     QDoubleSpinBox* initialTempSpinBox = nullptr;
+
+    QCheckBox* m_autoRecordCheckBox = nullptr;
+    QSpinBox* m_autoRecordIntervalSpinBox = nullptr;
 
     QPushButton* startCoolingBtn = nullptr;
     QPushButton* write_point = nullptr;

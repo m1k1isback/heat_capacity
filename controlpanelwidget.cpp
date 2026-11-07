@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QSlider>
 #include <QFrame>
+#include <QCheckBox>
 
 ControlPanelWidget::ControlPanelWidget(QWidget* parent)
     : QWidget(parent)
@@ -33,6 +34,7 @@ void ControlPanelWidget::setupUI()
     setMinimumWidth(380);
     setMaximumWidth(380);
 
+    // === 1. Группа "Образцы" ===
     m_sampleGroup = new QGroupBox(tr("Образцы"), this);
     QVBoxLayout* sampleMainLayout = new QVBoxLayout(m_sampleGroup);
     sampleMainLayout->setSpacing(4);
@@ -87,10 +89,11 @@ void ControlPanelWidget::setupUI()
 
     m_mainLayout->addWidget(m_sampleGroup);
 
+    // === 2. Группа "Параметры" ===
     m_envAndStartGroup = new QGroupBox(tr("Параметры"), this);
     QGridLayout* gridLayout = new QGridLayout(m_envAndStartGroup);
-    gridLayout->setSpacing(5);
-    gridLayout->setContentsMargins(5, 5, 5, 5);
+    gridLayout->setSpacing(4);
+    gridLayout->setContentsMargins(8, 8, 8, 8);
 
     gridLayout->addWidget(new QLabel("T₀ среды:"), 0, 0);
     T0 = new QDoubleSpinBox(this);
@@ -113,8 +116,8 @@ void ControlPanelWidget::setupUI()
     gridLayout->addWidget(calibHeader, 1, 0, 1, 4);
 
     QLabel* consts = new QLabel("k = 5.20 Дж/(мин·К),  Ck = 210 Дж/К", this);
-    consts->setStyleSheet("color: #000000; font-size: 13px; font-weight: normal;");
-    consts->setFont(QFont("Segoe UI", 11));
+    consts->setStyleSheet("color: #000000; font-size: 12px; font-weight: normal;");
+    consts->setFont(QFont("Segoe UI", 10));
     gridLayout->addWidget(consts, 2, 0, 1, 4);
 
     gridLayout->addWidget(new QLabel("T нач.:"), 3, 0);
@@ -137,8 +140,38 @@ void ControlPanelWidget::setupUI()
         initialTempSlider->setValue(val);
     });
 
+    // === АВТОЗАПИСЬ ===
+    QHBoxLayout* autoRecordLayout = new QHBoxLayout();
+    autoRecordLayout->setSpacing(10);
+
+    m_autoRecordCheckBox = new QCheckBox("Автозапись", this);
+    m_autoRecordCheckBox->setToolTip("Автоматическая запись точек с заданным интервалом");
+    m_autoRecordCheckBox->setChecked(false);
+
+    QLabel* intervalLabel = new QLabel("интервал:", this);
+    intervalLabel->setEnabled(false);
+
+    m_autoRecordIntervalSpinBox = new QSpinBox(this);
+    m_autoRecordIntervalSpinBox->setRange(10, 300);
+    m_autoRecordIntervalSpinBox->setValue(60);
+    m_autoRecordIntervalSpinBox->setSuffix(" с");
+    m_autoRecordIntervalSpinBox->setFixedWidth(80);
+    m_autoRecordIntervalSpinBox->setEnabled(false);
+
+    autoRecordLayout->addWidget(m_autoRecordCheckBox);
+    autoRecordLayout->addWidget(intervalLabel);
+    autoRecordLayout->addWidget(m_autoRecordIntervalSpinBox);
+    autoRecordLayout->addStretch();
+
+    gridLayout->addLayout(autoRecordLayout, 4, 0, 1, 4);
+
+    // Коннекты для активации/деактивации спинбокса
+    connect(m_autoRecordCheckBox, &QCheckBox::toggled, intervalLabel, &QLabel::setEnabled);
+    connect(m_autoRecordCheckBox, &QCheckBox::toggled, m_autoRecordIntervalSpinBox, &QSpinBox::setEnabled);
+
     m_mainLayout->addWidget(m_envAndStartGroup);
 
+    // === 3. Группа "Действия" ===
     m_controlGroup = new QGroupBox(tr("Действия"), this);
     QVBoxLayout* manageLayout = new QVBoxLayout(m_controlGroup);
     manageLayout->setSpacing(6);
@@ -167,6 +200,7 @@ void ControlPanelWidget::setupUI()
 
     m_mainLayout->addWidget(m_controlGroup);
 
+    // === 4. Группа "Статус" ===
     m_statusGroup = new QGroupBox(tr("Статус"), this);
     m_statusGroup->setFont(QFont("Segoe UI", 10));
 
@@ -220,6 +254,11 @@ void ControlPanelWidget::setupConnections()
     connect(m_engine, &PhysicsEngine::timeUpdated, this, &ControlPanelWidget::onTimeUpdated);
     connect(m_engine, &PhysicsEngine::coolingTimeUpdated, this, &ControlPanelWidget::onCoolingTimeUpdated);
     connect(m_engine, &PhysicsEngine::pointsCountUpdated, this, &ControlPanelWidget::onPointsCountUpdated);
+
+    // Коннекты для автозаписи
+    connect(m_autoRecordCheckBox, &QCheckBox::toggled, m_engine, &PhysicsEngine::setAutoRecordEnabled);
+    connect(m_autoRecordIntervalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            m_engine, &PhysicsEngine::setAutoRecordInterval);
 }
 
 void ControlPanelWidget::onStartCoolingClicked()
@@ -250,6 +289,11 @@ void ControlPanelWidget::onStartCoolingClicked()
 
     m_engine->startCooling(initialTemp);
     emit coolingStarted(initialTemp);
+
+    // Если автозапись была включена до старта — запускаем её
+    if (m_autoRecordCheckBox->isChecked()) {
+        m_engine->setAutoRecordEnabled(true);
+    }
 }
 
 void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& materialName)
@@ -263,7 +307,7 @@ void ControlPanelWidget::onMaterialChanged(int sampleIndex, const QString& mater
     QLabel* label = m_sampleLabels[sampleIndex];
     if (!label) return;
 
-    QString infoText = QString("Θ=%1, ρ=%2")
+    QString infoText = QString("Θ=%1K, ρ=%2г/см³")
                            .arg(mat.debyeTemperature(), 0, 'f', 0)
                            .arg(mat.densityGcm3(), 0, 'f', 1);
     label->setText(infoText);

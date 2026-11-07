@@ -36,6 +36,14 @@ void CalorimeterScene::buildLayout()
     const double isoCX = 220;
     const double isoCY = 440;
 
+    // ИСПРАВЛЕНИЕ 4: надпись над установкой
+    QGraphicsTextItem *calorimeterTitle = new QGraphicsTextItem("Вакуумный калориметр");
+    calorimeterTitle->setPos(isoCX - 90, 120);
+    calorimeterTitle->setFont(QFont("Arial", 14, QFont::Bold));
+    calorimeterTitle->setDefaultTextColor(QColor("#2c3e50"));
+    calorimeterTitle->setZValue(11);
+    addItem(calorimeterTitle);
+
     // Параметры внешнего цилиндра (корпус)
     const double outerRX = 140;
     const double outerRY = 70;

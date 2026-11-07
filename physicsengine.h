@@ -24,11 +24,14 @@ public:
     void reset();
     void recordPoint();
 
-    QVector<Sample> getSamples() const { return m_samples; }
-    double getT0() const { return m_T0; }
+    void setAutoRecordEnabled(bool enabled);
+    void setAutoRecordInterval(int seconds);
 
     void setSampleActive(int index, bool active);
     void setDifferentialMode(int index, bool enabled);
+
+    QVector<Sample> getSamples() const { return m_samples; }
+    double getT0() const { return m_T0; }
 
 signals:
     void stateChanged(ExperimentState state);
@@ -39,14 +42,14 @@ signals:
     void displayTemperaturesUpdated(const QVector<double>& noisyTemps, int elapsedSec);
     void pointRecorded(int id, double time, const QVector<double>& temps);
     void tableReset();
-
-    // Новые сигналы для панели статуса
     void samplesConfigured(const QVector<Sample>& samples);
     void coolingRatesUpdated(const QVector<double>& rates);
     void progressUpdated(const QVector<double>& progress);
+    void autoRecordToggled(bool enabled);
 
 private slots:
     void onTimerTick();
+    void onAutoRecordTick();
 
 private:
     QVector<double> addMeasurementNoise(const QVector<double>& temps) const;
@@ -57,12 +60,13 @@ private:
     bool m_isAcceleratedMode;
     QVector<Sample> m_samples;
     QTimer* m_timer;
+    QTimer* m_autoRecordTimer;
 
     int m_pointsCount;
     QVector<double> m_lastRecordedTemps;
-
-    // Переменные для расчета скорости и прогресса
     QVector<double> m_previousTemps;
     QVector<double> m_coolingRates;
     double m_startTemp;
+
+    int m_autoRecordIntervalSec;  // НОВОЕ: запоминаем интервал в секундах
 };

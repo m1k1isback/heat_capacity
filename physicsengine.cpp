@@ -1,12 +1,11 @@
 #include "physicsengine.h"
 #include <cmath>
 #include <QRandomGenerator>
-#include <QtGlobal> // для qBound
+#include <QtGlobal>
 
-// Константы калориметра (из твоего интерфейса)
-const double K_CALORIMETER_PER_MIN = 5.20;  // Дж/(мин·К)
-const double K_CALORIMETER_PER_SEC = K_CALORIMETER_PER_MIN / 60.0; // Дж/(с·К)
-const double C_K = 210.0;                   // Теплоемкость самого калориметра, Дж/К
+const double K_CALORIMETER_PER_MIN = 5.20;
+const double K_CALORIMETER_PER_SEC = K_CALORIMETER_PER_MIN / 60.0;
+const double C_K = 210.0;
 
 PhysicsEngine::PhysicsEngine(QObject *parent)
     : QObject(parent),
@@ -15,14 +14,20 @@ PhysicsEngine::PhysicsEngine(QObject *parent)
     m_T0(20.0),
     m_isAcceleratedMode(false),
     m_timer(new QTimer(this)),
+    m_autoRecordTimer(new QTimer(this)),
     m_pointsCount(0),
-    m_startTemp(0.0)
+    m_startTemp(0.0),
+    m_autoRecordIntervalSec(60)  // Инициализация интервала по умолчанию (60 сек)
 {
     m_previousTemps.resize(4, 0.0);
     m_coolingRates.resize(4, 0.0);
     m_lastRecordedTemps.resize(4, 0.0);
 
     connect(m_timer, &QTimer::timeout, this, &PhysicsEngine::onTimerTick);
+    connect(m_autoRecordTimer, &QTimer::timeout, this, &PhysicsEngine::onAutoRecordTick);
+
+    // Устанавливаем интервал по умолчанию сразу
+    m_autoRecordTimer->setInterval(m_autoRecordIntervalSec * 1000);
 }
 
 void PhysicsEngine::configure(double t0, const QVector<Sample>& samples)
@@ -61,22 +66,27 @@ void PhysicsEngine::startCooling(double initialTemp)
     emit stateChanged(m_state);
     emit timeUpdated(0);
     emit pointsCountUpdated(0);
-
     emit coolingRatesUpdated(m_coolingRates);
     emit progressUpdated(QVector<double>(4, 0.0));
 
-    m_timer->start(1000); // 1 тик = 1 реальная секунда
+    m_timer->start(1000);
 }
 
 void PhysicsEngine::reset()
 {
     m_timer->stop();
+    m_autoRecordTimer->stop();
     m_state = ExperimentState::Idle;
     m_elapsedSec = 0;
     m_pointsCount = 0;
+    m_coolingRates.fill(0.0, 4);
+
     emit stateChanged(m_state);
     emit timeUpdated(0);
     emit pointsCountUpdated(0);
+    emit coolingRatesUpdated(m_coolingRates);
+    emit progressUpdated(QVector<double>(4, 0.0));
+    emit autoRecordToggled(false);
     emit tableReset();
 }
 
@@ -94,6 +104,38 @@ void PhysicsEngine::recordPoint()
     emit pointsCountUpdated(m_pointsCount);
 }
 
+// === ИСПРАВЛЕННЫЕ МЕТОДЫ АВТОЗАПИСИ ===
+
+void PhysicsEngine::setAutoRecordEnabled(bool enabled)
+{
+    if (enabled && m_state == ExperimentState::Cooling) {
+        // ВАЖНО: запускаем с правильным интервалом, а не с 0!
+        m_autoRecordTimer->start(m_autoRecordIntervalSec * 1000);
+    } else {
+        m_autoRecordTimer->stop();
+    }
+    emit autoRecordToggled(enabled);
+}
+
+void PhysicsEngine::setAutoRecordInterval(int seconds)
+{
+    if (seconds < 1) seconds = 1;  // защита от 0 и отрицательных
+    m_autoRecordIntervalSec = seconds;
+    int intervalMs = seconds * 1000;
+    m_autoRecordTimer->setInterval(intervalMs);
+
+    // Если таймер активен — перезапускаем с новым интервалом
+    if (m_autoRecordTimer->isActive()) {
+        m_autoRecordTimer->stop();
+        m_autoRecordTimer->start(intervalMs);
+    }
+}
+
+void PhysicsEngine::onAutoRecordTick()
+{
+    recordPoint();
+}
+
 void PhysicsEngine::onTimerTick()
 {
     if (m_state != ExperimentState::Cooling) return;
@@ -103,7 +145,7 @@ void PhysicsEngine::onTimerTick()
 
     QVector<double> newTemps(4);
     QVector<double> progress(4, 0.0);
-    double dt = 1.0; // Шаг времени = 1 секунда
+    double dt = 1.0;
 
     for (int i = 0; i < 4; ++i) {
         if (!m_samples[i].isActive) {
@@ -115,35 +157,17 @@ void PhysicsEngine::onTimerTick()
 
         double currentT = m_samples[i].currentTemp;
 
-        // =====================================================================
-        // РЕАЛЬНАЯ ФИЗИКА: Закон охлаждения Ньютона-Рихмана
-        // dT/dt = - (k / C_полная) * (T - T0)
-        // =====================================================================
-
-        // 1. Масса в килограммах
-        double mass_kg = m_samples[i].massGrams / 1000.0;
-
-        // 1. Теплоемкость образца (уже рассчитана в Sample с учетом модели Дебая)
-        // Метод calculateHeatCapacity() возвращает C_обр = m * c_уд(T) в Дж/К
         double C_sample = m_samples[i].calculateHeatCapacity();
-
-        // 2. Полная теплоемкость системы: C_полная = C_калориметра + C_образца
         double C_total = C_K + C_sample;
 
-        // 3. Скорость изменения температуры (°C в секунду)
         double dT_dt = -(K_CALORIMETER_PER_SEC / C_total) * (currentT - m_T0);
-
-        // 4. Новая температура
         newTemps[i] = currentT + dT_dt * dt;
-        // =====================================================================
 
         m_samples[i].currentTemp = newTemps[i];
 
-        // Расчет скорости остывания (°C в минуту) для отображения в статусе
         m_coolingRates[i] = (newTemps[i] - m_previousTemps[i]) * 60.0;
         m_previousTemps[i] = newTemps[i];
 
-        // Расчет прогресса остывания (%)
         if (m_startTemp > m_T0) {
             double totalRange = m_startTemp - m_T0;
             double cooledRange = m_startTemp - newTemps[i];
@@ -151,12 +175,10 @@ void PhysicsEngine::onTimerTick()
         }
     }
 
-    // Отправляем обновления в UI
     emit coolingRatesUpdated(m_coolingRates);
     emit progressUpdated(progress);
     emit temperaturesUpdated(newTemps, m_elapsedSec);
 
-    // Добавляем измерительный шум для дисплеев
     QVector<double> noisyTemps = addMeasurementNoise(newTemps);
     emit displayTemperaturesUpdated(noisyTemps, m_elapsedSec);
 }
@@ -166,7 +188,6 @@ QVector<double> PhysicsEngine::addMeasurementNoise(const QVector<double>& temps)
     QVector<double> noisy = temps;
     for (int i = 0; i < 4; ++i) {
         if (m_samples[i].isActive) {
-            // Случайный шум +/- 0.15 градуса (реалистичная погрешность термопары)
             double noise = (QRandomGenerator::global()->generateDouble() - 0.5) * 0.3;
             noisy[i] += noise;
         }
@@ -185,5 +206,4 @@ void PhysicsEngine::setDifferentialMode(int index, bool enabled)
 {
     Q_UNUSED(index);
     Q_UNUSED(enabled);
-    // Дифференциальный режим обрабатывается на уровне отображения (в сцене)
 }
